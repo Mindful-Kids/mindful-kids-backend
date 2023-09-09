@@ -1,0 +1,113 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlserver"
+    url      = env("DATABASE_URL")
+}
+
+model Admin {
+    id          Int           @id @default(autoincrement())
+    firstName   String
+    lastName    String
+    email       String
+    password    String
+    status      String?
+    Environment Environment[]
+}
+
+model CareTaker {
+    id        Int     @id @default(autoincrement())
+    email     String
+    password  String
+    firstName String
+    lastName  String
+    gender    String
+    type      String
+    status    String?
+    Child     Child[]
+}
+
+model ChildEnvironment {
+    id                       Int                        @id @default(autoincrement())
+    child_id                 Int
+    env_id                   Int
+    Child                    Child                      @relation(fields: [child_id], references: [id])
+    Environment              Environment                @relation(fields: [env_id], references: [id])
+    ChildEnvironmentActivity ChildEnvironmentActivity[]
+}
+
+model ChildEnvironmentActivity {
+    id                  Int              @id @default(autoincrement())
+    child_env_id        Int
+    activity_time_start DateTime
+    activity_time_end   DateTime
+    ChildEnvironment    ChildEnvironment @relation(fields: [child_env_id], references: [id])
+    Traits              Traits[]
+}
+
+model ChildHobby {
+    id       Int   @id @default(autoincrement())
+    child_id Int
+    hobby_id Int
+    Child    Child @relation(fields: [child_id], references: [id])
+    Hobby    Hobby @relation(fields: [hobby_id], references: [id])
+}
+
+model Child {
+    id               Int                @id @default(autoincrement())
+    date_of_birth    DateTime
+    firstName        String
+    lastName         String
+    description      String?
+    gender           String
+    status           String?
+    parent           Int
+    Parent           CareTaker          @relation(fields: [parent], references: [id])
+    ChildEnvironment ChildEnvironment[]
+    ChildHobby       ChildHobby[]
+}
+
+model Environment {
+    id                 Int                  @id @default(autoincrement())
+    name               String
+    gender             String
+    start_age          Int
+    end_age            Int
+    path               String
+    status             String?
+    added_by           Int
+    Admin              Admin                @relation(fields: [added_by], references: [id])
+    ChildEnvironment   ChildEnvironment[]
+    EnvironmentHobbies EnvironmentHobbies[]
+}
+
+model EnvironmentHobbies {
+    id          Int         @id @default(autoincrement())
+    env_id      Int
+    hobby_id    Int
+    Environment Environment @relation(fields: [env_id], references: [id])
+    Hobby       Hobby       @relation(fields: [hobby_id], references: [id])
+}
+
+model Hobby {
+    id                 Int                  @id @default(autoincrement())
+    name               String
+    status             String?
+    ChildHobby         ChildHobby[]
+    EnvironmentHobbies EnvironmentHobbies[]
+}
+
+model Traits {
+    id                       Int                       @id @default(autoincrement())
+    learning                 Float?
+    confidence               Float?
+    public_speaking          Float?
+    communication_skills     Float?
+    sympathy                 Float?
+    honesty                  Float?
+    responsibility           Float?
+    activity_id              Int?
+    ChildEnvironmentActivity ChildEnvironmentActivity? @relation(fields: [activity_id], references: [id])
+}
