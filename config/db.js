@@ -12,3 +12,5 @@ const connection = new sql.ConnectionPool({
 connection.connect().then(() => {
   console.log("Connected to SQL Server");
 });
+
+module.exports = connection;
