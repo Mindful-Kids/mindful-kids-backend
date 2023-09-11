@@ -11,6 +11,9 @@ const getProfile = async (req, res, next) => {
   });
 };
 
+const addChild = async (req, res, next) => {};
+
 module.exports = {
   getProfile,
+  addChild,
 };

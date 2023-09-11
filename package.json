@@ -1,7 +1,6 @@
 {
   "name": "mindful-kids-backend",
   "version": "1.0.0",
-  "description": "Mindful Kids Backend",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js"
