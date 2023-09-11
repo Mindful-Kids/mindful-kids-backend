@@ -36,7 +36,7 @@ const addChild = async (req, res, next) => {
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const upload = await cloudinary.v2.uploader
-    .upload(req.file.path)
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
     .catch((err) => {
       console.log(err);
       return res
