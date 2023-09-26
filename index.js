@@ -1,7 +1,5 @@
 const express = require("express");
-// const sql = require("msnodesqlv8");
 require("dotenv").config();
-// const connection = require("./config/db");
 
 const app = express();
 app.use(express.json());

@@ -13,6 +13,7 @@ model CareTaker {
     firstName String
     lastName  String
     type      String
+    image     String
     gender    Boolean    @default(true)
     status    Boolean    @default(true)
     Children  Children[]
@@ -26,6 +27,7 @@ model Children {
     description String
     parentId    Int
     age         Int
+    image       String
     gender      Boolean      @default(true)
     status      Boolean      @default(true)
     parent      CareTaker    @relation(fields: [parentId], references: [id])
@@ -94,7 +96,7 @@ model Enviroment {
     status                  Boolean                   @default(true)
     addedBy                 Admin                     @relation(fields: [addedById], references: [id])
     addedById               Int
-    imagePath               String
+    image                   String
     ChildEnviromentActivity ChildEnviromentActivity[]
     ChildEnviroment         ChildEnviroment[]
     EnviromentHobbies       EnviromentHobbies[]
@@ -107,6 +109,6 @@ model Admin {
     email      String       @unique
     password   String
     status     Boolean      @default(true)
-    imagePath  String
+    iamge      String
     Enviroment Enviroment[]
 }
