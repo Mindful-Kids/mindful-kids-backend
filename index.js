@@ -11,6 +11,7 @@ app.get("/api", async (req, res) => {
 app.use("/api/auth", require("./routes/auth_routes"));
 app.use("/api/caretaker", require("./routes/caretaker_routes"));
 app.use("/api/environment", require("./routes/environment_routes"));
+app.use("/api/admin", require("./routes/admin_routes"));
 
 /*
 app.post("/api/insert", async (req, res) => {

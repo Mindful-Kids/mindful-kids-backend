@@ -10,6 +10,7 @@ datasource db {
 model CareTaker {
     id        Int        @id @default(autoincrement())
     email     String     @unique
+    password  String
     firstName String
     lastName  String
     type      String
@@ -109,6 +110,6 @@ model Admin {
     email      String       @unique
     password   String
     status     Boolean      @default(true)
-    iamge      String
+    image      String
     Enviroment Enviroment[]
 }
