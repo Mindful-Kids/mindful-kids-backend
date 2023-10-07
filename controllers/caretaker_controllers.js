@@ -122,6 +122,126 @@ const getChildren = async (req, res) => {
       .json({ message: "Error occurred while fetching children." });
   }
 };
+const bcrypt = require("bcryptjs");
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await prisma.careTaker.findUnique({
+      where: {
+        email: email,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while logging in." });
+  }
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, existingUser.password);
+    // isValidPassword = password === existingUser.password;
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while logging in." });
+  }
+
+  const careTaker = {
+    id: existingUser.id,
+    name: existingUser.firstName + " " + existingUser.lastName,
+    email: existingUser.email,
+  };
+  jwt.sign(
+    { careTaker },
+    process.env.JWT_SECRET,
+    { expiresIn: "60s" },
+    (err, token) => {
+      if (err) {
+        console.log(err);
+        res.status(500).json({
+          message: "An error occurred while generating token.",
+        });
+      }
+      res.json({ message: "success", data: careTaker, token });
+    }
+  );
+};
+
+const signup = async (req, res) => {
+  const { firstName, lastName, email, password, gender, type } = req.body;
+
+  if (!firstName || !lastName || !email || !gender || !type || !req.file)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  const existingUser = await prisma.careTaker.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  if (existingUser)
+    return res.status(422).json({ message: "User already exists." });
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  const upload = await cloudinary.v2.uploader
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .catch((err) => {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Error occurred while uploading image." });
+    });
+
+  const careTaker = {
+    firstName: firstName,
+    lastName: lastName,
+    email: email,
+    password: hashedPassword,
+    gender: Boolean(gender),
+    type: type,
+    image: upload.secure_url,
+  };
+
+  try {
+    const newCareTaker = await prisma.careTaker.create({
+      data: careTaker,
+    });
+
+    res.status(200).json({
+      message: "Care Taker added successfully.",
+      careTakerId: newCareTaker.id,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while adding care Taker." });
+  }
+};
+
+const getProfile = async (req, res) => {};
+
+const getChildren = async (req, res) => {
+  const parentId = req.authData.id;
+  try {
+    const children = await prisma.children.findMany({
+      where: {
+        parentId: parentId,
+      },
+    });
+    return res.status(200).json({ message: "success", data: children });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children." });
+  }
+};
 
 const addChild = async (req, res) => {
   const {
@@ -213,7 +333,10 @@ const deleteChild = async (req, res) => {
 module.exports = {
   login,
   signup,
+  login,
+  signup,
   getProfile,
+  getChildren,
   getChildren,
   addChild,
   deleteChild,
