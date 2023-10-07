@@ -6,9 +6,11 @@ BEGIN TRAN;
 CREATE TABLE [dbo].[CareTaker] (
     [id] INT NOT NULL IDENTITY(1,1),
     [email] NVARCHAR(1000) NOT NULL,
+    [password] NVARCHAR(1000) NOT NULL,
     [firstName] NVARCHAR(1000) NOT NULL,
     [lastName] NVARCHAR(1000) NOT NULL,
     [type] NVARCHAR(1000) NOT NULL,
+    [image] NVARCHAR(1000) NOT NULL,
     [gender] BIT NOT NULL CONSTRAINT [CareTaker_gender_df] DEFAULT 1,
     [status] BIT NOT NULL CONSTRAINT [CareTaker_status_df] DEFAULT 1,
     CONSTRAINT [CareTaker_pkey] PRIMARY KEY CLUSTERED ([id]),
@@ -24,6 +26,7 @@ CREATE TABLE [dbo].[Children] (
     [description] NVARCHAR(1000) NOT NULL,
     [parentId] INT NOT NULL,
     [age] INT NOT NULL,
+    [image] NVARCHAR(1000) NOT NULL,
     [gender] BIT NOT NULL CONSTRAINT [Children_gender_df] DEFAULT 1,
     [status] BIT NOT NULL CONSTRAINT [Children_status_df] DEFAULT 1,
     CONSTRAINT [Children_pkey] PRIMARY KEY CLUSTERED ([id])
@@ -93,7 +96,7 @@ CREATE TABLE [dbo].[Enviroment] (
     [enviromentPath] NVARCHAR(1000) NOT NULL,
     [status] BIT NOT NULL CONSTRAINT [Enviroment_status_df] DEFAULT 1,
     [addedById] INT NOT NULL,
-    [imagePath] NVARCHAR(1000) NOT NULL,
+    [image] NVARCHAR(1000) NOT NULL,
     CONSTRAINT [Enviroment_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
@@ -105,7 +108,7 @@ CREATE TABLE [dbo].[Admin] (
     [email] NVARCHAR(1000) NOT NULL,
     [password] NVARCHAR(1000) NOT NULL,
     [status] BIT NOT NULL CONSTRAINT [Admin_status_df] DEFAULT 1,
-    [imagePath] NVARCHAR(1000) NOT NULL,
+    [image] NVARCHAR(1000) NOT NULL,
     CONSTRAINT [Admin_pkey] PRIMARY KEY CLUSTERED ([id]),
     CONSTRAINT [Admin_email_key] UNIQUE NONCLUSTERED ([email])
 );

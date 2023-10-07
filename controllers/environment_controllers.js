@@ -3,18 +3,13 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const getEnvironments = async (req, res) => {
-  res.status(200).json({ message: "Write get env backend" });
+  const environments = await prisma.enviroment.findMany();
+
+  res.status(200).json({ message: "success", data: environments });
 };
 
 const addEnvironment = async (req, res) => {
-  const {
-    name,
-    startAge,
-    endAge,
-    enviromentPath,
-    addedById,
-  } = req.body;
-
+  const { name, startAge, endAge, enviromentPath, addedById } = req.body;
   if (
     !name ||
     !startAge ||
@@ -36,8 +31,8 @@ const addEnvironment = async (req, res) => {
 
   const enviroment = {
     name: name,
-    startAge: startAge,
-    endAge: endAge,
+    startAge: parseInt(startAge),
+    endAge: parseInt(endAge),
     enviromentPath: enviromentPath,
     addedById: parseInt(addedById),
     image: upload.secure_url,
@@ -45,7 +40,7 @@ const addEnvironment = async (req, res) => {
 
   try {
     const newEnviroment = await prisma.enviroment.create({
-      data: enviroment
+      data: enviroment,
     });
 
     res.status(200).json({
@@ -53,6 +48,7 @@ const addEnvironment = async (req, res) => {
       environmetId: newEnviroment.id,
     });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while adding enviroment." });
@@ -61,5 +57,5 @@ const addEnvironment = async (req, res) => {
 
 module.exports = {
   getEnvironments,
-  addEnvironment
+  addEnvironment,
 };
