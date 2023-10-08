@@ -304,9 +304,7 @@ const updateChild = async (req, res) => {
 const updateChildImage = async (req, res) => {
   const { childId } = req.body;
 
-  if (
-    !req.file
-  )
+  if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   // Upload image to cloudinary
@@ -341,6 +339,31 @@ const updateChildImage = async (req, res) => {
   }
 };
 
+// Get those enviroments for child that are not already selected by the child 
+const getUnselectedEnviroments = async (req, res) => {
+  const { childId } = req.body;
+  try {
+    const environmentsNotInChildEnviroment = await prisma.enviroment.findMany({
+      where: {
+        NOT: {
+          ChildEnviroment: {
+            some: {
+              childId: childId,
+            },
+          },
+        },
+      },
+    });
+    return res.status(200).json({ message: "success", data: environmentsNotInChildEnviroment });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Server Error" });
+  }
+};
+
+
 module.exports = {
   login,
   signup,
@@ -349,4 +372,5 @@ module.exports = {
   deleteChild,
   updateChild,
   updateChildImage,
+  getUnselectedEnviroments,
 };
