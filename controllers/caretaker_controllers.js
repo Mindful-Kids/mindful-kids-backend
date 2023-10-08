@@ -131,7 +131,6 @@ const addChild = async (req, res) => {
     description,
     parentId,
   } = req.body;
-
   if (
     !firstName ||
     !lastName ||
@@ -207,10 +206,92 @@ const deleteChild = async (req, res) => {
   }
 };
 
+const updateChild = async (req, res) => {
+  const {
+    childId,
+    hobbiesId,
+    firstName,
+    lastName,
+    gender,
+    dateOfBirth,
+    hobbies,
+    description,
+  } = req.body;
+
+  if (
+    !childId ||
+    !hobbiesId ||
+    !firstName ||
+    !lastName ||
+    !gender ||
+    !dateOfBirth ||
+    !hobbies ||
+    !description ||
+    !req.file
+  )
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  const upload = await cloudinary.v2.uploader
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .catch((err) => {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Error occurred while uploading image." });
+    });
+
+
+
+  // Convert hobbies of strings into array
+  const existingHobbyIds = hobbiesId.split(' ').map((id) => parseInt(id));
+  const newHobbies = hobbies.split(' ').map((id) => parseInt(id));
+
+  try {
+    const [updatedChild, updatedChildHobby] = await prisma.$transaction([
+      prisma.children.update({
+        where: {
+          id: parseInt(childId)
+        },
+        data: {
+          firstName: firstName,
+          lastName: lastName,
+          description: description,
+          dateOfBirth: new Date(dateOfBirth),
+          gender: Boolean(gender),
+          image: upload.secure_url,
+        },
+      }),
+      ...existingHobbyIds.map((hobbyIdToUpdate, index) =>
+        prisma.childHobby.update({
+          where: {
+            id: parseInt(hobbyIdToUpdate),
+            childId: parseInt(childId),
+          },
+          data: {
+            hobbyId: parseInt(newHobbies[index]),
+          },
+        })
+      ),
+    ]);
+
+    res.status(200).json({
+      message: "success",
+      childId: updatedChild.id,
+      childHobby: updatedChildHobby.id,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while updating child." });
+  }
+};
+
 module.exports = {
   login,
   signup,
   getChildren,
   addChild,
   deleteChild,
+  updateChild
 };

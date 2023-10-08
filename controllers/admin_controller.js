@@ -57,6 +57,25 @@ const login = async (req, res) => {
   });
 };
 
+const deleteCareTaker = async (req, res) => {
+  const { careTakerId } = req.body;
+  try {
+    await prisma.careTaker.update({
+      where: {
+        id: parseInt(careTakerId),
+      },
+      data: { status: false },
+    });
+    return res.status(200).json({ message: "success" });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while deleting caretaker." });
+  }
+}
+
 module.exports = {
   login,
+  deleteCareTaker,
 };

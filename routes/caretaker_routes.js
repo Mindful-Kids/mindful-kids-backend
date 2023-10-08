@@ -7,13 +7,10 @@ const careTakerControllers = require("../controllers/caretaker_controllers");
 
 router.post("/login", careTakerControllers.login);
 router.post("/signup", multer.single("image"), careTakerControllers.signup);
-router.get("/profile", careTakerControllers.getProfile);
+// router.get("/profile", careTakerControllers.getProfile);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
-router.post(
-  "/add-child",
-  multer.single("image"),
-  careTakerControllers.addChild
-);
+router.post("/add-child", multer.single("image"), careTakerControllers.addChild);
+router.post("/update-child", multer.single("image"), careTakerControllers.updateChild);
 router.delete("/delete-child", careTakerControllers.deleteChild);
 
 module.exports = router;
