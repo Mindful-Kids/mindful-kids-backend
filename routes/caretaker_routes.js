@@ -10,7 +10,8 @@ router.post("/signup", multer.single("image"), careTakerControllers.signup);
 // router.get("/profile", careTakerControllers.getProfile);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
 router.post("/add-child", multer.single("image"), careTakerControllers.addChild);
-router.post("/update-child", multer.single("image"), careTakerControllers.updateChild);
+router.post("/update-child", careTakerControllers.updateChild);
+router.post("/update-child-image", multer.single("image"), careTakerControllers.updateChildImage);
 router.delete("/delete-child", careTakerControllers.deleteChild);
 
 module.exports = router;

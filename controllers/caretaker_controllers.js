@@ -131,6 +131,7 @@ const addChild = async (req, res) => {
     description,
     parentId,
   } = req.body;
+
   if (
     !firstName ||
     !lastName ||
@@ -142,7 +143,7 @@ const addChild = async (req, res) => {
     !parentId ||
     !req.file
   )
-    return res.status(422).json({ message: "Required fields are not filled." });
+    return res.status(422).json({ message: "Required fields are not filled" });
 
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
@@ -164,21 +165,32 @@ const addChild = async (req, res) => {
     image: upload.secure_url,
   };
 
-  try {
-    const [newChild, newChildHobby] = await prisma.$transaction([
-      prisma.children.create({ data: child }),
-      prisma.childHobby.create({
-        data: {
-          childId: newChild.id,
-          hobbyId: parseInt(hobbies),
-        },
-      }),
-    ]);
+  const newHobbies = hobbies.split(' ').map((id) => parseInt(id));
 
+  try {
+    const [newChild] = await prisma.$transaction(async (prisma) => {
+      // Create child record
+      const createdChild = await prisma.children.create({ data: child });
+      // create hobby record
+      const newChildHobby = await Promise.all(
+        newHobbies.map(async (hobby) => {
+          const newChildHobby = await prisma.childHobby.create({
+            data: {
+              childId: parseInt(createdChild.id),
+              hobbyId: parseInt(hobby),
+            },
+          });
+          return newChildHobby;
+        })
+      );
+
+
+      return [createdChild, newChildHobby];
+    });
+    console.log(newChild[0]);
     res.status(200).json({
       message: "success",
       childId: newChild.id,
-      childHobby: newChildHobby.id,
     });
   } catch (error) {
     console.log(error);
@@ -240,14 +252,12 @@ const updateChild = async (req, res) => {
         .json({ message: "Error occurred while uploading image." });
     });
 
-
-
   // Convert hobbies of strings into array
   const existingHobbyIds = hobbiesId.split(' ').map((id) => parseInt(id));
   const newHobbies = hobbies.split(' ').map((id) => parseInt(id));
 
   try {
-    const [updatedChild, updatedChildHobby] = await prisma.$transaction([
+    const [updatedChild] = await prisma.$transaction([
       prisma.children.update({
         where: {
           id: parseInt(childId)
@@ -258,18 +268,22 @@ const updateChild = async (req, res) => {
           description: description,
           dateOfBirth: new Date(dateOfBirth),
           gender: Boolean(gender),
-          image: upload.secure_url,
+          // image: upload.secure_url,
         },
       }),
-      ...existingHobbyIds.map((hobbyIdToUpdate, index) =>
-        prisma.childHobby.update({
+      ...existingHobbyIds.map((previousHobbyId) =>
+        prisma.childHobby.delete({
           where: {
-            id: parseInt(hobbyIdToUpdate),
-            childId: parseInt(childId),
+            id: parseInt(previousHobbyId),
           },
+        })
+      ),
+      ...newHobbies.map((hobbyIdToUpdate) =>
+        prisma.childHobby.create({
           data: {
-            hobbyId: parseInt(newHobbies[index]),
-          },
+            childId: parseInt(childId),
+            hobbyId: parseInt(hobbyIdToUpdate)
+          }
         })
       ),
     ]);
@@ -277,7 +291,7 @@ const updateChild = async (req, res) => {
     res.status(200).json({
       message: "success",
       childId: updatedChild.id,
-      childHobby: updatedChildHobby.id,
+
     });
   } catch (error) {
     console.log(error);
@@ -287,11 +301,52 @@ const updateChild = async (req, res) => {
   }
 };
 
+const updateChildImage = async (req, res) => {
+  const { childId } = req.body;
+
+  if (
+    !req.file
+  )
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  // Upload image to cloudinary
+  const upload = await cloudinary.v2.uploader
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .catch((err) => {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Error occurred while uploading image." });
+    });
+
+  try {
+    // Update child image
+    const updatedChild = await prisma.children.update({
+      where: {
+        id: parseInt(childId)
+      },
+      data: {
+        image: upload.secure_url,
+      },
+    });
+    res.status(200).json({
+      message: "success",
+      childId: updatedChild.id,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while updating Image." });
+  }
+};
+
 module.exports = {
   login,
   signup,
   getChildren,
   addChild,
   deleteChild,
-  updateChild
+  updateChild,
+  updateChildImage,
 };
