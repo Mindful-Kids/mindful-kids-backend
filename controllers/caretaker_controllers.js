@@ -20,40 +20,48 @@ const login = async (req, res) => {
       .json({ message: "Error occurred while logging in." });
   }
 
+  // console.log(existingUser);
+
   let isValidPassword = false;
   try {
     isValidPassword = await bcrypt.compare(password, existingUser.password);
+    if (isValidPassword) {
+      const careTaker = {
+        id: existingUser.id,
+        name: existingUser.firstName + " " + existingUser.lastName,
+        email: existingUser.email,
+      };
+      jwt.sign(
+        { careTaker },
+        process.env.JWT_SECRET,
+        { expiresIn: "2h" },
+        (err, token) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json({
+              message: "An error occurred while generating token.",
+            });
+          }
+          res.status(200).json({ message: "success", data: careTaker, token });
+        }
+      );
+    } else {
+      res.status(500).json({ message: "Error: Wrong Password" });
+
+    }
   } catch (err) {
     return res
       .status(500)
       .json({ message: "Error occurred while logging in." });
   }
 
-  const careTaker = {
-    id: existingUser.id,
-    name: existingUser.firstName + " " + existingUser.lastName,
-    email: existingUser.email,
-  };
-  jwt.sign(
-    { careTaker },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" },
-    (err, token) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json({
-          message: "An error occurred while generating token.",
-        });
-      }
-      res.json({ message: "success", data: careTaker, token });
-    }
-  );
+
 };
 
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, gender, type } = req.body;
 
-  if (!firstName || !lastName || !email || !gender || !type)
+  if (!firstName || !lastName || !email || !password || !gender || !type)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const existingUser = await prisma.careTaker.findUnique({
@@ -73,7 +81,7 @@ const signup = async (req, res) => {
     lastName: lastName,
     email: email,
     password: hashedPassword,
-    gender: Boolean(gender),
+    gender: Boolean(gender === 'male'),
     type: type,
     image: image,
   };
