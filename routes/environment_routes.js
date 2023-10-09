@@ -1,13 +1,12 @@
 const router = require("express").Router();
 const environmentController = require("../controllers/environment_controllers");
+const verifyToken = require("../middlewares/verify_token");
 const multer = require("../middlewares/multer");
 
-// TODO: Add verifyToken middleware to all routes
-
-router.get("/all", environmentController.getEnvironments);
+router.get("/all", verifyToken, environmentController.getEnvironments);
 router.post(
   "/add",
-  multer.single("image"),
+  [verifyToken, multer.single("image")],
   environmentController.addEnvironment
 );
 

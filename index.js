@@ -5,7 +5,7 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/api", async (req, res) => {
+app.get("/", async (req, res) => {
   res.status(200).json({ message: "API is running!" });
 });
 

@@ -37,7 +37,7 @@ const login = async (req, res) => {
   jwt.sign(
     { careTaker },
     process.env.JWT_SECRET,
-    { expiresIn: "60s" },
+    { expiresIn: "2h" },
     (err, token) => {
       if (err) {
         console.log(err);
@@ -53,7 +53,7 @@ const login = async (req, res) => {
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, gender, type } = req.body;
 
-  if (!firstName || !lastName || !email || !gender || !type || !req.file)
+  if (!firstName || !lastName || !email || !gender || !type)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const existingUser = await prisma.careTaker.findUnique({
@@ -66,15 +66,7 @@ const signup = async (req, res) => {
     return res.status(422).json({ message: "User already exists." });
 
   const hashedPassword = await bcrypt.hash(password, 12);
-
-  const upload = await cloudinary.v2.uploader
-    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
-    .catch((err) => {
-      console.log(err);
-      return res
-        .status(500)
-        .json({ message: "Error occurred while uploading image." });
-    });
+  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}+${lastName}&radius=50`;
 
   const careTaker = {
     firstName: firstName,
@@ -83,7 +75,7 @@ const signup = async (req, res) => {
     password: hashedPassword,
     gender: Boolean(gender),
     type: type,
-    image: upload.secure_url,
+    image: image,
   };
 
   try {
@@ -145,14 +137,7 @@ const addChild = async (req, res) => {
   )
     return res.status(422).json({ message: "Required fields are not filled" });
 
-  const upload = await cloudinary.v2.uploader
-    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
-    .catch((err) => {
-      console.log(err);
-      return res
-        .status(500)
-        .json({ message: "Error occurred while uploading image." });
-    });
+  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}+${lastName}&radius=50`;
 
   const child = {
     firstName: firstName,
@@ -162,16 +147,14 @@ const addChild = async (req, res) => {
     dateOfBirth: new Date(dateOfBirth),
     gender: Boolean(gender),
     age: parseInt(age),
-    image: upload.secure_url,
+    image: image,
   };
 
-  const newHobbies = hobbies.split(' ').map((id) => parseInt(id));
+  const newHobbies = hobbies.split(" ").map((id) => parseInt(id));
 
   try {
     const [newChild] = await prisma.$transaction(async (prisma) => {
-      // Create child record
       const createdChild = await prisma.children.create({ data: child });
-      // create hobby record
       const newChildHobby = await Promise.all(
         newHobbies.map(async (hobby) => {
           const newChildHobby = await prisma.childHobby.create({
@@ -183,7 +166,6 @@ const addChild = async (req, res) => {
           return newChildHobby;
         })
       );
-
 
       return [createdChild, newChildHobby];
     });
@@ -243,24 +225,14 @@ const updateChild = async (req, res) => {
   )
     return res.status(422).json({ message: "Required fields are not filled." });
 
-  const upload = await cloudinary.v2.uploader
-    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
-    .catch((err) => {
-      console.log(err);
-      return res
-        .status(500)
-        .json({ message: "Error occurred while uploading image." });
-    });
-
-  // Convert hobbies of strings into array
-  const existingHobbyIds = hobbiesId.split(' ').map((id) => parseInt(id));
-  const newHobbies = hobbies.split(' ').map((id) => parseInt(id));
+  const existingHobbyIds = hobbiesId.split(" ").map((id) => parseInt(id));
+  const newHobbies = hobbies.split(" ").map((id) => parseInt(id));
 
   try {
     const [updatedChild] = await prisma.$transaction([
       prisma.children.update({
         where: {
-          id: parseInt(childId)
+          id: parseInt(childId),
         },
         data: {
           firstName: firstName,
@@ -268,7 +240,6 @@ const updateChild = async (req, res) => {
           description: description,
           dateOfBirth: new Date(dateOfBirth),
           gender: Boolean(gender),
-          // image: upload.secure_url,
         },
       }),
       ...existingHobbyIds.map((previousHobbyId) =>
@@ -282,8 +253,8 @@ const updateChild = async (req, res) => {
         prisma.childHobby.create({
           data: {
             childId: parseInt(childId),
-            hobbyId: parseInt(hobbyIdToUpdate)
-          }
+            hobbyId: parseInt(hobbyIdToUpdate),
+          },
         })
       ),
     ]);
@@ -291,7 +262,6 @@ const updateChild = async (req, res) => {
     res.status(200).json({
       message: "success",
       childId: updatedChild.id,
-
     });
   } catch (error) {
     console.log(error);
@@ -307,7 +277,6 @@ const updateChildImage = async (req, res) => {
   if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
 
-  // Upload image to cloudinary
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
     .catch((err) => {
@@ -318,10 +287,9 @@ const updateChildImage = async (req, res) => {
     });
 
   try {
-    // Update child image
     const updatedChild = await prisma.children.update({
       where: {
-        id: parseInt(childId)
+        id: parseInt(childId),
       },
       data: {
         image: upload.secure_url,
@@ -339,7 +307,7 @@ const updateChildImage = async (req, res) => {
   }
 };
 
-// Get those enviroments for child that are not already selected by the child 
+// Get those enviroments for child that are not already selected by the child
 const getUnselectedEnviroments = async (req, res) => {
   const { childId } = req.body;
   try {
@@ -354,15 +322,14 @@ const getUnselectedEnviroments = async (req, res) => {
         },
       },
     });
-    return res.status(200).json({ message: "success", data: environmentsNotInChildEnviroment });
+    return res
+      .status(200)
+      .json({ message: "success", data: environmentsNotInChildEnviroment });
   } catch (error) {
     console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server Error" });
   }
 };
-
 
 module.exports = {
   login,
