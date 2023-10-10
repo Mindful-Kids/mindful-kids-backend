@@ -12,6 +12,7 @@ const login = async (req, res) => {
     existingUser = await prisma.careTaker.findUnique({
       where: {
         email: email,
+        status: true,
       },
     });
   } catch (error) {
@@ -20,42 +21,44 @@ const login = async (req, res) => {
       .json({ message: "Error occurred while logging in." });
   }
 
-  // console.log(existingUser);
+  if (!existingUser)
+    return res.status(401).json({ message: "Invalid credentials." });
 
   let isValidPassword = false;
   try {
     isValidPassword = await bcrypt.compare(password, existingUser.password);
-    if (isValidPassword) {
-      const careTaker = {
-        id: existingUser.id,
-        name: existingUser.firstName + " " + existingUser.lastName,
-        email: existingUser.email,
-      };
-      jwt.sign(
-        { careTaker },
-        process.env.JWT_SECRET,
-        { expiresIn: "2h" },
-        (err, token) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json({
-              message: "An error occurred while generating token.",
-            });
-          }
-          res.status(200).json({ message: "success", data: careTaker, token });
-        }
-      );
-    } else {
-      res.status(500).json({ message: "Error: Wrong Password" });
-
-    }
   } catch (err) {
     return res
       .status(500)
       .json({ message: "Error occurred while logging in." });
   }
 
+  if (!isValidPassword)
+    return res.status(401).json({ message: "Invalid credentials." });
 
+  const careTaker = {
+    id: existingUser.id,
+    firstName: existingUser.firstName,
+    lastName: existingUser.lastName,
+    email: existingUser.email,
+    gender: existingUser.gender,
+    image: existingUser.image,
+  };
+
+  jwt.sign(
+    { id: existingUser.id, email: existingUser.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "2h" },
+    (err, token) => {
+      if (err) {
+        console.log(err);
+        res.status(500).json({
+          message: "An error occurred while generating token.",
+        });
+      }
+      res.json({ message: "success", data: careTaker, token });
+    }
+  );
 };
 
 const signup = async (req, res) => {
@@ -81,7 +84,7 @@ const signup = async (req, res) => {
     lastName: lastName,
     email: email,
     password: hashedPassword,
-    gender: Boolean(gender === 'male'),
+    gender: Boolean(gender === "male"),
     type: type,
     image: image,
   };
@@ -92,14 +95,79 @@ const signup = async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Care Taker added successfully.",
+      message: "success",
       careTakerId: newCareTaker.id,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while adding care Taker." });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  const careTakerId = req.authData.id;
+  const { firstName, lastName, password, gender, type } = req.body;
+
+  if (!firstName || !lastName || !password || !gender || !type)
+    return res.status(422).json({ message: "Required fields are not filled." });
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  try {
+    await prisma.careTaker.update({
+      where: {
+        id: careTakerId,
+      },
+      data: {
+        firstName: firstName,
+        lastName: lastName,
+        password: hashedPassword,
+        gender: gender,
+        type: type,
+      },
+    });
+    res.status(200).json({
+      message: "success",
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while uodating profile." });
+  }
+};
+
+const updateProfileImage = async (req, res) => {
+  const careTakerId = req.authData.id;
+
+  if (!req.file)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  const upload = await cloudinary.v2.uploader
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .catch((err) => {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Error occurred while uploading image." });
+    });
+
+  try {
+    await prisma.careTaker.update({
+      where: {
+        id: parseInt(careTakerId),
+      },
+      data: {
+        image: upload.secure_url,
+      },
+    });
+    res.status(200).json({
+      message: "success",
     });
   } catch (error) {
     console.log(error);
     return res
       .status(500)
-      .json({ message: "Error occurred while adding care Taker." });
+      .json({ message: "Error occurred while updating profile image." });
   }
 };
 
@@ -315,7 +383,6 @@ const updateChildImage = async (req, res) => {
   }
 };
 
-// Get those enviroments for child that are not already selected by the child
 const getUnselectedEnviroments = async (req, res) => {
   const { childId } = req.body;
   try {
@@ -342,6 +409,8 @@ const getUnselectedEnviroments = async (req, res) => {
 module.exports = {
   login,
   signup,
+  updateProfile,
+  updateProfileImage,
   getChildren,
   addChild,
   deleteChild,

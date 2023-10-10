@@ -73,7 +73,7 @@ const deleteCareTaker = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while deleting caretaker." });
   }
-}
+};
 
 module.exports = {
   login,
