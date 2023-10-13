@@ -3,9 +3,18 @@ const verifyToken = require("../middlewares/verify_token");
 const multer = require("../middlewares/multer");
 const careTakerControllers = require("../controllers/caretaker_controllers");
 
+/*CareTaker*/
 router.post("/login", careTakerControllers.login);
 router.post("/signup", careTakerControllers.signup);
-// router.get("/profile", careTakerControllers.getProfile);
+// router.get("/get-dashboard", verifyToken, careTakerControllers.updateProfile);
+router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
+router.post(
+  "/update-profile-image",
+  [verifyToken, multer.single("image")],
+  careTakerControllers.updateProfile
+);
+
+/*Children*/
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
 router.post("/add-child", careTakerControllers.addChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
