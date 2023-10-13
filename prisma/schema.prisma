@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Admin {
+  id         Int          @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String       @unique
+  password   String
+  status     Boolean      @default(true)
+  image      String
+  Enviroment Enviroment[]
+}
+
 model CareTaker {
   id        Int        @id @default(autoincrement())
   email     String     @unique
@@ -21,34 +32,65 @@ model CareTaker {
 }
 
 model Children {
-  id          Int          @id @default(autoincrement())
-  dateOfBirth DateTime
-  firstName   String
-  lastName    String
-  description String
-  parentId    Int
-  age         Int
-  image       String
-  gender      Boolean      @default(true)
-  status      Boolean      @default(true)
-  ChildHobby  ChildHobby[]
-  parent      CareTaker    @relation(fields: [parentId], references: [id])
+  id              Int               @id @default(autoincrement())
+  dateOfBirth     DateTime
+  firstName       String
+  lastName        String
+  description     String
+  parentId        Int
+  image           String
+  gender          Boolean           @default(true)
+  status          Boolean           @default(true)
+  childEnviroment ChildEnviroment[]
+  ChildHobby      ChildHobby[]
+  parent          CareTaker         @relation(fields: [parentId], references: [id])
 }
 
-model ChildEnviromentActivity {
-  id                Int        @id @default(autoincrement())
-  activityTimeStart DateTime
-  activityTimeEnd   DateTime
-  childEnviromentId Int
-  enviroment        Enviroment @relation(fields: [childEnviromentId], references: [id])
-  Traits            Traits[]
+model Traits {
+  id               Int                @id @default(autoincrement())
+  name             String
+  status           Boolean            @default(true)
+  EnviromentTraits EnviromentTraits[]
+  SkillsAquire     SkillsAquire[]
+}
+
+model Enviroment {
+  id               Int                @id @default(autoincrement())
+  name             String
+  startAge         Int
+  endAge           Int
+  enviromentPath   String
+  status           Boolean            @default(true)
+  addedById        Int
+  image            String
+  ChildEnviroment  ChildEnviroment[]
+  addedBy          Admin              @relation(fields: [addedById], references: [id])
+  EnviromentTraits EnviromentTraits[]
+}
+
+model Hobbies {
+  id         Int          @id @default(autoincrement())
+  name       String
+  status     Boolean      @default(true)
+  ChildHobby ChildHobby[]
 }
 
 model ChildEnviroment {
-  id           Int        @id @default(autoincrement())
-  childId      Int
-  enviromentId Int
-  enviroment   Enviroment @relation(fields: [enviromentId], references: [id])
+  id                      Int                       @id @default(autoincrement())
+  childId                 Int
+  enviromentId            Int
+  children                Children                  @relation(fields: [childId], references: [id])
+  enviroment              Enviroment                @relation(fields: [enviromentId], references: [id])
+  ChildEnviromentActivity ChildEnviromentActivity[]
+}
+
+model ChildEnviromentActivity {
+  id                Int             @id @default(autoincrement())
+  activityTimeStart DateTime
+  activityTimeEnd   DateTime
+  childEnviromentId Int
+  enviroment        ChildEnviroment @relation(fields: [childEnviromentId], references: [id])
+  SkillsAquire      SkillsAquire[]
 }
 
 model ChildHobby {
@@ -59,57 +101,19 @@ model ChildHobby {
   hobby   Hobbies  @relation(fields: [hobbyId], references: [id])
 }
 
-model Hobbies {
-  id                Int                 @id @default(autoincrement())
-  name              String
-  status            Boolean             @default(true)
-  ChildHobby        ChildHobby[]
-  EnviromentHobbies EnviromentHobbies[]
-}
-
-model EnviromentHobbies {
+model EnviromentTraits {
   id           Int        @id @default(autoincrement())
   enviromentId Int
-  hobbyId      Int
+  traitId      Int
   enviroment   Enviroment @relation(fields: [enviromentId], references: [id])
-  hobby        Hobbies    @relation(fields: [hobbyId], references: [id])
+  trait        Traits     @relation(fields: [traitId], references: [id])
 }
 
-model Traits {
-  id                  Int                     @id @default(autoincrement())
-  learning            Float
-  confidance          Float
-  publicSpeaking      Float
-  communicationSkills Float
-  sympthy             Float
-  honesty             Float
-  responsibility      Float
-  activityId          Int
-  activity            ChildEnviromentActivity @relation(fields: [activityId], references: [id])
-}
-
-model Enviroment {
-  id                      Int                       @id @default(autoincrement())
-  name                    String
-  startAge                Int
-  endAge                  Int
-  enviromentPath          String
-  status                  Boolean                   @default(true)
-  addedById               Int
-  image                   String
-  ChildEnviroment         ChildEnviroment[]
-  ChildEnviromentActivity ChildEnviromentActivity[]
-  addedBy                 Admin                     @relation(fields: [addedById], references: [id])
-  EnviromentHobbies       EnviromentHobbies[]
-}
-
-model Admin {
-  id         Int          @id @default(autoincrement())
-  firstName  String
-  lastName   String
-  email      String       @unique
-  password   String
-  status     Boolean      @default(true)
-  image      String
-  Enviroment Enviroment[]
+model SkillsAquire {
+  id                      Int                     @id @default(autoincrement())
+  childEnvActivityId      Int
+  traitId                 Int
+  value                   Float
+  childEnviromentActivity ChildEnviromentActivity @relation(fields: [childEnvActivityId], references: [id])
+  trait                   Traits                  @relation(fields: [traitId], references: [id])
 }

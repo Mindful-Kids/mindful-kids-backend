@@ -1,0 +1,19 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[SkillsAquire] ADD CONSTRAINT [SkillsAquire_childEnvActivityId_fkey] FOREIGN KEY ([childEnvActivityId]) REFERENCES [dbo].[ChildEnviromentActivity]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

@@ -20,40 +20,38 @@ const login = async (req, res) => {
       .json({ message: "Error occurred while logging in." });
   }
 
-  // console.log(existingUser);
 
   let isValidPassword = false;
   try {
     isValidPassword = await bcrypt.compare(password, existingUser.password);
-    if (isValidPassword) {
-      const careTaker = {
-        id: existingUser.id,
-        name: existingUser.firstName + " " + existingUser.lastName,
-        email: existingUser.email,
-      };
-      jwt.sign(
-        { careTaker },
-        process.env.JWT_SECRET,
-        { expiresIn: "2h" },
-        (err, token) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json({
-              message: "An error occurred while generating token.",
-            });
-          }
-          res.status(200).json({ message: "success", data: careTaker, token });
-        }
-      );
-    } else {
-      res.status(500).json({ message: "Error: Wrong Password" });
 
-    }
   } catch (err) {
     return res
       .status(500)
       .json({ message: "Error occurred while logging in." });
   }
+  if (!isValidPassword)
+    return res.status(500).json({ message: "Error: Wrong Password" });
+
+  const careTaker = {
+    id: existingUser.id,
+    name: existingUser.firstName + " " + existingUser.lastName,
+    email: existingUser.email,
+  };
+  jwt.sign(
+    { careTaker },
+    process.env.JWT_SECRET,
+    { expiresIn: "2h" },
+    (err, token) => {
+      if (err) {
+        console.log(err);
+        res.status(500).json({
+          message: "An error occurred while generating token.",
+        });
+      }
+      return res.status(200).json({ message: "success", data: careTaker, token });
+    }
+  );
 
 
 };
@@ -105,10 +103,12 @@ const signup = async (req, res) => {
 
 const getChildren = async (req, res) => {
   const parentId = req.authData.id;
+  console.log("ksdk ", parentId);
   try {
     const children = await prisma.children.findMany({
       where: {
         parentId: parentId,
+        status: true,
       },
     });
     return res.status(200).json({ message: "success", data: children });
