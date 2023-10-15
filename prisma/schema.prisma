@@ -7,6 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Lookup {
+  id       Int         @id @default(autoincrement())
+  category String
+  value    String
+  gender   CareTaker[] @relation("genderRelation")
+  type     CareTaker[] @relation("typeRelation")
+  Children Children[]
+}
+
 model Admin {
   id         Int          @id @default(autoincrement())
   firstName  String
@@ -24,11 +33,14 @@ model CareTaker {
   password  String
   firstName String
   lastName  String
-  type      String
+  typeId    Int
+  genderId  Int
   image     String
-  gender    Boolean    @default(true)
   status    Boolean    @default(true)
+  gender    Lookup     @relation("genderRelation", fields: [genderId], references: [id])
+  type      Lookup     @relation("typeRelation", fields: [typeId], references: [id], onUpdate: NoAction)
   Children  Children[]
+  Feedback  FeedBack[]
 }
 
 model Children {
@@ -39,19 +51,22 @@ model Children {
   description     String
   parentId        Int
   image           String
-  gender          Boolean           @default(true)
+  genderId        Int
   status          Boolean           @default(true)
   childEnviroment ChildEnviroment[]
   ChildHobby      ChildHobby[]
+  gender          Lookup            @relation(fields: [genderId], references: [id], onUpdate: NoAction)
   parent          CareTaker         @relation(fields: [parentId], references: [id])
+  ChildTraits     ChildTraits[]
 }
 
 model Traits {
   id               Int                @id @default(autoincrement())
   name             String
   status           Boolean            @default(true)
+  ChildTraits      ChildTraits[]
   EnviromentTraits EnviromentTraits[]
-  SkillsAquire     SkillsAquire[]
+  TraitsAcquire    TraitsAcquire[]
 }
 
 model Enviroment {
@@ -66,6 +81,7 @@ model Enviroment {
   ChildEnviroment  ChildEnviroment[]
   addedBy          Admin              @relation(fields: [addedById], references: [id])
   EnviromentTraits EnviromentTraits[]
+  Feedback         FeedBack[]
 }
 
 model Hobbies {
@@ -90,7 +106,7 @@ model ChildEnviromentActivity {
   activityTimeEnd   DateTime
   childEnviromentId Int
   enviroment        ChildEnviroment @relation(fields: [childEnviromentId], references: [id])
-  SkillsAquire      SkillsAquire[]
+  TraitsAcquire     TraitsAcquire[]
 }
 
 model ChildHobby {
@@ -109,11 +125,30 @@ model EnviromentTraits {
   trait        Traits     @relation(fields: [traitId], references: [id])
 }
 
-model SkillsAquire {
+model TraitsAcquire {
   id                      Int                     @id @default(autoincrement())
   childEnvActivityId      Int
   traitId                 Int
   value                   Float
   childEnviromentActivity ChildEnviromentActivity @relation(fields: [childEnvActivityId], references: [id])
   trait                   Traits                  @relation(fields: [traitId], references: [id])
+}
+
+model ChildTraits {
+  id      Int      @id @default(autoincrement())
+  childId Int
+  traitId Int
+  child   Children @relation(fields: [childId], references: [id])
+  trait   Traits   @relation(fields: [traitId], references: [id])
+}
+
+model FeedBack {
+  id           Int        @id @default(autoincrement())
+  careTakerId  Int
+  enviromentId Int
+  rating       Float
+  comments     String
+  time         DateTime
+  careTaker    CareTaker  @relation(fields: [careTakerId], references: [id])
+  enviroment   Enviroment @relation(fields: [enviromentId], references: [id])
 }
