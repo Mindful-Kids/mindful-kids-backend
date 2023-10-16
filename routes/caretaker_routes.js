@@ -16,7 +16,7 @@ router.post(
 
 /*Children*/
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
-router.post("/add-child", careTakerControllers.addChild);
+router.post("/add-child", verifyToken, careTakerControllers.addChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(
   "/update-child-image",

@@ -21,7 +21,6 @@ const login = async (req, res) => {
       .json({ message: "Error occurred while logging in." });
   }
 
-
   let isValidPassword = false;
   try {
     isValidPassword = await bcrypt.compare(password, existingUser.password);
@@ -30,40 +29,19 @@ const login = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while logging in." });
   }
-  if (!isValidPassword)
-    return res.status(500).json({ message: "Error: Wrong Password" });
-
-  const careTaker = {
-    id: existingUser.id,
-    name: existingUser.firstName + " " + existingUser.lastName,
-    email: existingUser.email,
-  };
-  jwt.sign(
-    { careTaker },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" },
-    (err, token) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json({
-          message: "An error occurred while generating token.",
-        });
-      }
-      return res.status(200).json({ message: "success", data: careTaker, token });
-    }
-  );
 
   if (!isValidPassword)
     return res.status(401).json({ message: "Invalid credentials." });
 
-  // const careTaker = {
-  //   id: existingUser.id,
-  //   firstName: existingUser.firstName,
-  //   lastName: existingUser.lastName,
-  //   email: existingUser.email,
-  //   gender: existingUser.gender,
-  //   image: existingUser.image,
-  // };
+  const careTaker = {
+    id: existingUser.id,
+    firstName: existingUser.firstName,
+    lastName: existingUser.lastName,
+    email: existingUser.email,
+    type: existingUser.type,
+    gender: existingUser.gender,
+    image: existingUser.image,
+  };
 
   jwt.sign(
     { id: existingUser.id, email: existingUser.email },
@@ -193,7 +171,6 @@ const updateProfileImage = async (req, res) => {
 
 const getChildren = async (req, res) => {
   const parentId = req.authData.id;
-  console.log("ksdk ", parentId);
   try {
     const children = await prisma.children.findMany({
       where: {
@@ -201,6 +178,9 @@ const getChildren = async (req, res) => {
         status: true,
       },
     });
+
+    children.forEach((item) => delete item.status);
+
     return res.status(200).json({ message: "success", data: children });
   } catch (error) {
     console.log("ERROR", error);
@@ -211,16 +191,9 @@ const getChildren = async (req, res) => {
 };
 
 const addChild = async (req, res) => {
-  const {
-    firstName,
-    lastName,
-    gender,
-    age,
-    dateOfBirth,
-    hobbies,
-    description,
-    parentId,
-  } = req.body;
+  const parentId = req.authData.id;
+  const { firstName, lastName, gender, dateOfBirth, hobbies, description } =
+    req.body;
 
   if (
     !firstName ||
@@ -228,10 +201,8 @@ const addChild = async (req, res) => {
     !gender ||
     !dateOfBirth ||
     !hobbies ||
-    !age ||
     !description ||
-    !parentId ||
-    !req.file
+    !parentId
   )
     return res.status(422).json({ message: "Required fields are not filled" });
 
@@ -244,11 +215,10 @@ const addChild = async (req, res) => {
     parentId: parseInt(parentId),
     dateOfBirth: new Date(dateOfBirth),
     gender: Boolean(gender),
-    age: parseInt(age),
     image: image,
   };
 
-  const newHobbies = hobbies.split(" ").map((id) => parseInt(id));
+  const newHobbies = hobbies.split(",").map((id) => parseInt(id));
 
   try {
     const [newChild] = await prisma.$transaction(async (prisma) => {
@@ -267,7 +237,6 @@ const addChild = async (req, res) => {
 
       return [createdChild, newChildHobby];
     });
-    console.log(newChild[0]);
     res.status(200).json({
       message: "success",
       childId: newChild.id,
@@ -318,8 +287,7 @@ const updateChild = async (req, res) => {
     !gender ||
     !dateOfBirth ||
     !hobbies ||
-    !description ||
-    !req.file
+    !description
   )
     return res.status(422).json({ message: "Required fields are not filled." });
 

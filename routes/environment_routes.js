@@ -6,7 +6,7 @@ const multer = require("../middlewares/multer");
 router.get("/all", verifyToken, environmentController.getEnvironments);
 router.post(
   "/add",
-  [verifyToken, multer.single("image")],
+  multer.single("image"),
   environmentController.addEnvironment
 );
 
