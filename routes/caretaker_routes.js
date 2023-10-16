@@ -6,7 +6,6 @@ const careTakerControllers = require("../controllers/caretaker_controllers");
 /*CareTaker*/
 router.post("/login", careTakerControllers.login);
 router.post("/signup", careTakerControllers.signup);
-// router.get("/get-dashboard", verifyToken, careTakerControllers.updateProfile);
 router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
   "/update-profile-image",

@@ -38,8 +38,8 @@ const login = async (req, res) => {
     firstName: existingUser.firstName,
     lastName: existingUser.lastName,
     email: existingUser.email,
-    type: existingUser.type,
-    gender: existingUser.gender,
+    type: existingUser.typeId,
+    gender: existingUser.genderId,
     image: existingUser.image,
   };
 
@@ -60,9 +60,9 @@ const login = async (req, res) => {
 };
 
 const signup = async (req, res) => {
-  const { firstName, lastName, email, password, gender, type } = req.body;
+  const { firstName, lastName, email, password, genderId, typeId } = req.body;
 
-  if (!firstName || !lastName || !email || !password || !gender || !type)
+  if (!firstName || !lastName || !email || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const existingUser = await prisma.careTaker.findUnique({
@@ -82,8 +82,8 @@ const signup = async (req, res) => {
     lastName: lastName,
     email: email,
     password: hashedPassword,
-    gender: Boolean(gender === "male"),
-    type: type,
+    genderId: genderId,
+    typeId: typeId,
     image: image,
   };
 
@@ -97,6 +97,7 @@ const signup = async (req, res) => {
       careTakerId: newCareTaker.id,
     });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while adding care Taker." });
