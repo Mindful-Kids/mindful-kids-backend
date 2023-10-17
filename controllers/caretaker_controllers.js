@@ -222,7 +222,6 @@ const getHobbies = async (req, res) => {
     });
 
     hobbies.forEach((item) => delete item.status);
-    console.log(hobbies)
     return res.status(200).json({ message: "success", data: hobbies });
   } catch (error) {
     console.log("ERROR", error);
@@ -241,7 +240,6 @@ const getTraits = async (req, res) => {
     });
 
     traits.forEach((item) => delete item.status);
-    console.log(traits)
     return res.status(200).json({ message: "success", data: traits });
   } catch (error) {
     console.log("ERROR", error);
