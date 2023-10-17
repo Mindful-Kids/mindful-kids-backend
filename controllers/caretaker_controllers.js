@@ -62,8 +62,6 @@ const login = async (req, res) => {
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
 
-  console.log(req.body);
-
   if (!firstName || !lastName || !email || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
 
@@ -190,24 +188,90 @@ const updateProfileImage = async (req, res) => {
   }
 };
 
-const getChildren = async (req, res) => {
+const getChildrens = async (req, res) => {
   const parentId = req.authData.id;
   try {
-    const children = await prisma.children.findMany({
+    const childrens = await prisma.children.findMany({
       where: {
         parentId: parentId,
         status: true,
       },
     });
 
-    children.forEach((item) => delete item.status);
-    console.log(children);
+    childrens.forEach((item) => delete item.status);
+    return res.status(200).json({ message: "success", data: childrens });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children." });
+  }
+};
+
+const getChildren = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const children = await prisma.children.findUnique({
+      where: {
+        id: id,
+        status: true,
+      },
+    });
+    delete children.status;
     return res.status(200).json({ message: "success", data: children });
   } catch (error) {
     console.log("ERROR", error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
+  }
+};
+
+const getChildHobbies = async (req, res) => {
+  const childId = req.params.id;
+  try {
+    const hobbies = await prisma.hobbies.findMany({
+      where: {
+        ChildHobbies: {
+          some: {
+            childId: parseInt(childId), // You can change this to the desired childId
+          },
+        },
+        status: true,
+      },
+    });
+
+    hobbies.forEach((item) => delete item.status);
+    return res.status(200).json({ message: "success", data: hobbies });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children hobbies." });
+  }
+};
+
+const getChildTraits = async (req, res) => {
+  const childId = req.params.id;
+  try {
+    const traits = await prisma.traits.findMany({
+      where: {
+        ChildTraits: {
+          some: {
+            childId: parseInt(childId), // You can change this to the desired childId
+          },
+        },
+        status: true,
+      },
+    });
+
+    traits.forEach((item) => delete item.status);
+    return res.status(200).json({ message: "success", data: traits });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children traits." });
   }
 };
 
@@ -248,7 +312,6 @@ const getTraits = async (req, res) => {
 };
 
 const addChild = async (req, res) => {
-  console.log("add c");
   const parentId = req.authData.id;
   const {
     firstName,
@@ -270,7 +333,6 @@ const addChild = async (req, res) => {
     !description
   )
     return res.status(422).json({ message: "Required fields are not filled" });
-
   const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
 
   const child = {
@@ -535,6 +597,9 @@ module.exports = {
   updateProfile,
   updateProfileImage,
   getChildren,
+  getChildHobbies,
+  getChildTraits,
+  getChildrens,
   getHobbies,
   getTraits,
   addChild,

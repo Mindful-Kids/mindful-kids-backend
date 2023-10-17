@@ -15,9 +15,13 @@ router.post(
 );
 
 /*Children*/
-router.get("/get-children", verifyToken, careTakerControllers.getChildren);
+router.post("/get-children", verifyToken, careTakerControllers.getChildren);
+router.get("/get-childrens", verifyToken, careTakerControllers.getChildrens);
 router.get("/get-hobbies", verifyToken, careTakerControllers.getHobbies);
 router.get("/get-traits", verifyToken, careTakerControllers.getTraits);
+router.get("/get-child-hobbies/:id", verifyToken, careTakerControllers.getChildHobbies);
+router.get("/get-child-traits/:id", verifyToken, careTakerControllers.getChildTraits);
+
 router.post("/add-child", verifyToken, careTakerControllers.addChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(

@@ -3,9 +3,24 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const getEnvironments = async (req, res) => {
-  const environments = await prisma.enviroment.findMany();
+  try {
+    const environments = await prisma.enviroments.findMany({
+      where: {
+        status: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        enviromentPath: true,
+      },
+    });
 
-  res.status(200).json({ message: "success", data: environments });
+    return res.status(200).json({ message: "success", data: environments });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
 };
 
 const addEnvironment = async (req, res) => {
