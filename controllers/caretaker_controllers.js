@@ -9,12 +9,13 @@ const login = async (req, res) => {
 
   let existingUser;
   try {
-    existingUser = await prisma.careTaker.findUnique({
+    existingUser = await prisma.careTakers.findUnique({
       where: {
         email: email,
         status: true,
       },
     });
+
   } catch (error) {
     return res
       .status(500)
@@ -62,10 +63,12 @@ const login = async (req, res) => {
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
 
+  console.log(req.body);
+
   if (!firstName || !lastName || !email || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
 
-  const existingUser = await prisma.careTaker.findUnique({
+  const existingUser = await prisma.careTakers.findUnique({
     where: {
       email: email,
     },
@@ -82,13 +85,13 @@ const signup = async (req, res) => {
     lastName: lastName,
     email: email,
     password: hashedPassword,
-    genderId: genderId,
-    typeId: typeId,
+    genderId: parseInt(genderId),
+    typeId: parseInt(typeId),
     image: image,
   };
 
   try {
-    const newCareTaker = await prisma.careTaker.create({
+    const newCareTaker = await prisma.careTakers.create({
       data: careTaker,
     });
 
@@ -104,25 +107,46 @@ const signup = async (req, res) => {
   }
 };
 
+const getCareTaker = async (req, res) => {
+  const parentId = req.authData.id;
+  try {
+    const careTaker = await prisma.careTakers.findUnique({
+      where: {
+        id: parseInt(parentId),
+        status: true,
+      },
+    });
+
+    delete careTaker.status;
+    return res.status(200).json({ message: "success", data: careTaker });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children." });
+  }
+}
+
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, password, gender, type } = req.body;
+  const { firstName, lastName, email, password, genderId, typeId } = req.body;
 
-  if (!firstName || !lastName || !password || !gender || !type)
+  if (!firstName || !lastName || !password || !genderId || !typeId || !email)
     return res.status(422).json({ message: "Required fields are not filled." });
   const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
-    await prisma.careTaker.update({
+    await prisma.careTakers.update({
       where: {
         id: careTakerId,
       },
       data: {
         firstName: firstName,
         lastName: lastName,
+        email: email,
         password: hashedPassword,
-        gender: gender,
-        type: type,
+        genderId: parseInt(genderId),
+        typeId: parseInt(typeId),
       },
     });
     res.status(200).json({
@@ -136,11 +160,10 @@ const updateProfile = async (req, res) => {
 };
 
 const updateProfileImage = async (req, res) => {
-  const careTakerId = req.authData.id;
 
+  const careTakerId = req.authData.id;
   if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
-
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
     .catch((err) => {
@@ -149,9 +172,8 @@ const updateProfileImage = async (req, res) => {
         .status(500)
         .json({ message: "Error occurred while uploading image." });
     });
-
   try {
-    await prisma.careTaker.update({
+    await prisma.careTakers.update({
       where: {
         id: parseInt(careTakerId),
       },
@@ -170,7 +192,7 @@ const updateProfileImage = async (req, res) => {
   }
 };
 
-const getChildren = async (req, res) => {
+const getChildrens = async (req, res) => {
   const parentId = req.authData.id;
   try {
     const children = await prisma.children.findMany({
@@ -181,7 +203,7 @@ const getChildren = async (req, res) => {
     });
 
     children.forEach((item) => delete item.status);
-
+    console.log(children)
     return res.status(200).json({ message: "success", data: children });
   } catch (error) {
     console.log("ERROR", error);
@@ -191,17 +213,56 @@ const getChildren = async (req, res) => {
   }
 };
 
+const getHobbies = async (req, res) => {
+  try {
+    const hobbies = await prisma.hobbies.findMany({
+      where: {
+        status: true,
+      },
+    });
+
+    hobbies.forEach((item) => delete item.status);
+    console.log(hobbies)
+    return res.status(200).json({ message: "success", data: hobbies });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching hobbies." });
+  }
+}
+
+const getTraits = async (req, res) => {
+  try {
+    const traits = await prisma.traits.findMany({
+      where: {
+        status: true,
+      },
+    });
+
+    traits.forEach((item) => delete item.status);
+    console.log(traits)
+    return res.status(200).json({ message: "success", data: traits });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching traits." });
+  }
+}
+
 const addChild = async (req, res) => {
   const parentId = req.authData.id;
-  const { firstName, lastName, gender, dateOfBirth, hobbies, description } =
+  const { firstName, lastName, genderId, dateOfBirth, hobbies, traits, description } =
     req.body;
 
   if (
     !firstName ||
     !lastName ||
-    !gender ||
+    !genderId ||
     !dateOfBirth ||
     !hobbies ||
+    !traits ||
     !description ||
     !parentId
   )
@@ -215,12 +276,12 @@ const addChild = async (req, res) => {
     description: description,
     parentId: parseInt(parentId),
     dateOfBirth: new Date(dateOfBirth),
-    gender: Boolean(gender),
+    genderId: parseInt(genderId),
     image: image,
   };
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
-
+  console.log("ddf ", newHobbies);
   try {
     const [newChild] = await prisma.$transaction(async (prisma) => {
       const createdChild = await prisma.children.create({ data: child });
@@ -339,6 +400,7 @@ const updateChild = async (req, res) => {
 };
 
 const updateChildImage = async (req, res) => {
+
   const { childId } = req.body;
 
   if (!req.file)
@@ -397,15 +459,77 @@ const getUnselectedEnviroments = async (req, res) => {
   }
 };
 
+const assignEnviroments = async (req, res) => {
+  const { childId, enviromentId } = req.body;
+  if (!childId || !enviromentId)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  const childEnviroment = {
+    childId: parseInt(childId),
+    enviromentId: parseInt(enviromentId)
+  }
+  try {
+    const newChildEnviroment = await prisma.childEnviroments.create({
+      data: childEnviroment,
+    });
+
+    res.status(200).json({
+      message: "success",
+      careTakerId: newChildEnviroment.id,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while adding care Taker." });
+  }
+}
+
+const getChildEnviroments = async (req, res) => {
+  const { childId } = req.body;
+  if (
+    !childId
+  )
+    return res.status(422).json({ message: "Required fields are not filled." });
+  try {
+    const environments = await prisma.enviroments.findMany({
+      where: {
+        ChildEnviroments: {
+          some: {
+            childId: childId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        image: true,
+        enviromentPath: true,
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ message: "success", data: environments });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+}
+
 module.exports = {
   login,
   signup,
+  getCareTaker,
   updateProfile,
   updateProfileImage,
-  getChildren,
+  getChildrens,
+  getHobbies,
+  getTraits,
   addChild,
   deleteChild,
   updateChild,
   updateChildImage,
   getUnselectedEnviroments,
+  assignEnviroments,
+  getChildEnviroments,
 };

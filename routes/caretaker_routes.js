@@ -6,15 +6,18 @@ const careTakerControllers = require("../controllers/caretaker_controllers");
 /*CareTaker*/
 router.post("/login", careTakerControllers.login);
 router.post("/signup", careTakerControllers.signup);
+router.get("/get-caretaker", verifyToken, careTakerControllers.getCareTaker);
 router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
   "/update-profile-image",
   [verifyToken, multer.single("image")],
-  careTakerControllers.updateProfile
+  careTakerControllers.updateProfileImage
 );
 
 /*Children*/
-router.get("/get-children", verifyToken, careTakerControllers.getChildren);
+router.get("/get-children", verifyToken, careTakerControllers.getChildrens);
+router.get("/get-hobbies", verifyToken, careTakerControllers.getHobbies);
+router.get("/get-traits", verifyToken, careTakerControllers.getTraits);
 router.post("/add-child", verifyToken, careTakerControllers.addChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(
@@ -28,5 +31,15 @@ router.post(
   careTakerControllers.getUnselectedEnviroments
 );
 router.delete("/delete-child", verifyToken, careTakerControllers.deleteChild);
+router.post(
+  "/assign-enviroment",
+  verifyToken,
+  careTakerControllers.assignEnviroments
+);
+router.post(
+  "/get-child-enviroments",
+  verifyToken,
+  careTakerControllers.getChildEnviroments
+);
 
 module.exports = router;
