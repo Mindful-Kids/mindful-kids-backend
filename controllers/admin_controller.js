@@ -30,7 +30,7 @@ const login = async (req, res) => {
 
   if (!isValidPassword) {
     return res.status(401).json({
-      message: "Invalid credentials, could not log you in!",
+      message: "Invalid credentials",
     });
   }
 
@@ -38,7 +38,7 @@ const login = async (req, res) => {
   try {
     token = jwt.sign(
       { userId: existingUser.id, email: existingUser.email },
-      "super_secret",
+      process.env.JWT_SECRET,
       {
         expiresIn: "1h",
       }

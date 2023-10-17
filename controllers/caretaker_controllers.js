@@ -15,7 +15,6 @@ const login = async (req, res) => {
         status: true,
       },
     });
-
   } catch (error) {
     return res
       .status(500)
@@ -78,7 +77,7 @@ const signup = async (req, res) => {
     return res.status(422).json({ message: "User already exists." });
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}+${lastName}&radius=50`;
+  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
 
   const careTaker = {
     firstName: firstName,
@@ -125,7 +124,7 @@ const getCareTaker = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while fetching children." });
   }
-}
+};
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
@@ -160,7 +159,6 @@ const updateProfile = async (req, res) => {
 };
 
 const updateProfileImage = async (req, res) => {
-
   const careTakerId = req.authData.id;
   if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
@@ -192,7 +190,7 @@ const updateProfileImage = async (req, res) => {
   }
 };
 
-const getChildrens = async (req, res) => {
+const getChildren = async (req, res) => {
   const parentId = req.authData.id;
   try {
     const children = await prisma.children.findMany({
@@ -203,7 +201,7 @@ const getChildrens = async (req, res) => {
     });
 
     children.forEach((item) => delete item.status);
-    console.log(children)
+    console.log(children);
     return res.status(200).json({ message: "success", data: children });
   } catch (error) {
     console.log("ERROR", error);
@@ -222,7 +220,7 @@ const getHobbies = async (req, res) => {
     });
 
     hobbies.forEach((item) => delete item.status);
-    console.log(hobbies)
+    console.log(hobbies);
     return res.status(200).json({ message: "success", data: hobbies });
   } catch (error) {
     console.log("ERROR", error);
@@ -230,7 +228,7 @@ const getHobbies = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while fetching hobbies." });
   }
-}
+};
 
 const getTraits = async (req, res) => {
   try {
@@ -241,7 +239,7 @@ const getTraits = async (req, res) => {
     });
 
     traits.forEach((item) => delete item.status);
-    console.log(traits)
+    console.log(traits);
     return res.status(200).json({ message: "success", data: traits });
   } catch (error) {
     console.log("ERROR", error);
@@ -249,12 +247,19 @@ const getTraits = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while fetching traits." });
   }
-}
+};
 
 const addChild = async (req, res) => {
   const parentId = req.authData.id;
-  const { firstName, lastName, genderId, dateOfBirth, hobbies, traits, description } =
-    req.body;
+  const {
+    firstName,
+    lastName,
+    genderId,
+    dateOfBirth,
+    hobbies,
+    traits,
+    description,
+  } = req.body;
 
   if (
     !firstName ||
@@ -263,12 +268,11 @@ const addChild = async (req, res) => {
     !dateOfBirth ||
     !hobbies ||
     !traits ||
-    !description ||
-    !parentId
+    !description
   )
     return res.status(422).json({ message: "Required fields are not filled" });
 
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}+${lastName}&radius=50`;
+  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
 
   const child = {
     firstName: firstName,
@@ -281,13 +285,14 @@ const addChild = async (req, res) => {
   };
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
-  console.log("ddf ", newHobbies);
+  const newTraits = traits.split(",").map((id) => parseInt(id));
+
   try {
     const [newChild] = await prisma.$transaction(async (prisma) => {
       const createdChild = await prisma.children.create({ data: child });
       const newChildHobby = await Promise.all(
         newHobbies.map(async (hobby) => {
-          const newChildHobby = await prisma.childHobby.create({
+          const newChildHobby = await prisma.childHobbies.create({
             data: {
               childId: parseInt(createdChild.id),
               hobbyId: parseInt(hobby),
@@ -297,8 +302,21 @@ const addChild = async (req, res) => {
         })
       );
 
-      return [createdChild, newChildHobby];
+      const newChildTraits = await Promise.all(
+        newTraits.map(async (trait) => {
+          const newChildTrait = await prisma.childTraits.create({
+            data: {
+              childId: parseInt(createdChild.id),
+              traitId: parseInt(trait),
+            },
+          });
+          return newChildTrait;
+        })
+      );
+
+      return [createdChild, newChildHobby, newChildTraits];
     });
+
     res.status(200).json({
       message: "success",
       childId: newChild.id,
@@ -400,7 +418,6 @@ const updateChild = async (req, res) => {
 };
 
 const updateChildImage = async (req, res) => {
-
   const { childId } = req.body;
 
   if (!req.file)
@@ -466,8 +483,8 @@ const assignEnviroments = async (req, res) => {
 
   const childEnviroment = {
     childId: parseInt(childId),
-    enviromentId: parseInt(enviromentId)
-  }
+    enviromentId: parseInt(enviromentId),
+  };
   try {
     const newChildEnviroment = await prisma.childEnviroments.create({
       data: childEnviroment,
@@ -483,13 +500,11 @@ const assignEnviroments = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while adding care Taker." });
   }
-}
+};
 
 const getChildEnviroments = async (req, res) => {
   const { childId } = req.body;
-  if (
-    !childId
-  )
+  if (!childId)
     return res.status(422).json({ message: "Required fields are not filled." });
   try {
     const environments = await prisma.enviroments.findMany({
@@ -507,14 +522,12 @@ const getChildEnviroments = async (req, res) => {
       },
     });
 
-    return res
-      .status(200)
-      .json({ message: "success", data: environments });
+    return res.status(200).json({ message: "success", data: environments });
   } catch (error) {
     console.log("ERROR", error);
     return res.status(500).json({ message: "Server Error" });
   }
-}
+};
 
 module.exports = {
   login,
@@ -522,7 +535,7 @@ module.exports = {
   getCareTaker,
   updateProfile,
   updateProfileImage,
-  getChildrens,
+  getChildren,
   getHobbies,
   getTraits,
   addChild,
