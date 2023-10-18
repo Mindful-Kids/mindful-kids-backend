@@ -123,6 +123,29 @@ const getCareTaker = async (req, res) => {
   }
 };
 
+const getCareTakerType = async (req, res) => {
+  const typeId = req.params.id;
+  console.log(typeId);
+
+  try {
+    const type = await prisma.lookup.findUnique({
+      where: {
+        id: parseInt(typeId),
+      },
+      select: {
+        value: true,
+      },
+    });
+    console.log(type)
+    return res.status(200).json({ message: "success", data: type });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children." });
+  }
+};
+
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
@@ -192,7 +215,7 @@ const getChildren = async (req, res) => {
   try {
     const childrens = await prisma.children.findMany({
       where: {
-        parentId: parentId,
+        parentId: parseInt(parentId),
         status: true,
       },
     });
@@ -206,6 +229,27 @@ const getChildren = async (req, res) => {
       .json({ message: "Error occurred while fetching children." });
   }
 };
+
+const getChildInfo = async (req, res) => {
+  const childId = req.params.id;
+
+  try {
+    const children = await prisma.children.findUnique({
+      where: {
+        id: parseInt(childId),
+        status: true,
+      },
+    });
+    delete children.status;
+    return res.status(200).json({ message: "success", data: children });
+  } catch (error) {
+    console.log("ERROR", error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching children." });
+  }
+};
+
 
 const getChildHobbies = async (req, res) => {
   const childId = req.params.id;
@@ -481,7 +525,6 @@ const updateChild = async (req, res) => {
 
 const updateChildImage = async (req, res) => {
   const { childId } = req.body;
-
   if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
 
@@ -586,6 +629,7 @@ const getChildEnviroments = async (req, res) => {
 
     return res.status(200).json({ message: "success", data: environments });
   } catch (error) {
+
     console.log("ERROR", error);
     return res.status(500).json({ message: "Server Error" });
   }
@@ -595,8 +639,10 @@ module.exports = {
   login,
   signup,
   getCareTaker,
+  getCareTakerType,
   updateProfile,
   updateProfileImage,
+  getChildInfo,
   getChildren,
   getChildHobbies,
   getChildTraits,
