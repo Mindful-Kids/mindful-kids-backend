@@ -38,8 +38,8 @@ const login = async (req, res) => {
     firstName: existingUser.firstName,
     lastName: existingUser.lastName,
     email: existingUser.email,
-    type: existingUser.typeId,
-    gender: existingUser.genderId,
+    typeId: existingUser.typeId,
+    genderId: existingUser.genderId,
     image: existingUser.image,
   };
 
@@ -97,7 +97,6 @@ const signup = async (req, res) => {
       careTakerId: newCareTaker.id,
     });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while adding care Taker." });
@@ -188,7 +187,7 @@ const updateProfileImage = async (req, res) => {
   }
 };
 
-const getChildrens = async (req, res) => {
+const getChildren = async (req, res) => {
   const parentId = req.authData.id;
   try {
     const childrens = await prisma.children.findMany({
@@ -200,25 +199,6 @@ const getChildrens = async (req, res) => {
 
     childrens.forEach((item) => delete item.status);
     return res.status(200).json({ message: "success", data: childrens });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children." });
-  }
-};
-
-const getChildren = async (req, res) => {
-  const { id } = req.body;
-  try {
-    const children = await prisma.children.findUnique({
-      where: {
-        id: id,
-        status: true,
-      },
-    });
-    delete children.status;
-    return res.status(200).json({ message: "success", data: children });
   } catch (error) {
     console.log("ERROR", error);
     return res
@@ -411,33 +391,33 @@ const deleteChild = async (req, res) => {
 const updateChild = async (req, res) => {
   const {
     childId,
-    hobbiesId,
     firstName,
     lastName,
-    gender,
+    genderId,
     dateOfBirth,
     hobbies,
+    traits,
     description,
   } = req.body;
 
   if (
     !childId ||
-    !hobbiesId ||
     !firstName ||
     !lastName ||
-    !gender ||
+    !genderId ||
     !dateOfBirth ||
     !hobbies ||
+    !traits ||
     !description
   )
     return res.status(422).json({ message: "Required fields are not filled." });
 
-  const existingHobbyIds = hobbiesId.split(" ").map((id) => parseInt(id));
-  const newHobbies = hobbies.split(" ").map((id) => parseInt(id));
+  const newHobbies = hobbies.split(",").map((id) => parseInt(id));
+  const newTraits = traits.split(",").map((id) => parseInt(id));
 
   try {
-    const [updatedChild] = await prisma.$transaction([
-      prisma.children.update({
+    const [updatedChild] = await prisma.$transaction(async (prisma) => {
+      const updatedChild = await prisma.children.update({
         where: {
           id: parseInt(childId),
         },
@@ -446,25 +426,46 @@ const updateChild = async (req, res) => {
           lastName: lastName,
           description: description,
           dateOfBirth: new Date(dateOfBirth),
-          gender: Boolean(gender),
+          genderId: parseInt(genderId),
         },
-      }),
-      ...existingHobbyIds.map((previousHobbyId) =>
-        prisma.childHobby.delete({
-          where: {
-            id: parseInt(previousHobbyId),
-          },
+      });
+
+      prisma.childHobbies.deleteMany({
+        where: {
+          childId: parseInt(childId),
+        },
+      });
+      const newChildHobby = await Promise.all(
+        newHobbies.map(async (hobby) => {
+          const newChildHobby = await prisma.childHobbies.create({
+            data: {
+              childId: parseInt(childId),
+              hobbyId: parseInt(hobby),
+            },
+          });
+          return newChildHobby;
         })
-      ),
-      ...newHobbies.map((hobbyIdToUpdate) =>
-        prisma.childHobby.create({
-          data: {
-            childId: parseInt(childId),
-            hobbyId: parseInt(hobbyIdToUpdate),
-          },
+      );
+
+      prisma.childTraits.deleteMany({
+        where: {
+          childId: parseInt(childId),
+        },
+      });
+      const newChildTraits = await Promise.all(
+        newTraits.map(async (trait) => {
+          const newChildTrait = await prisma.childTraits.create({
+            data: {
+              childId: parseInt(childId),
+              traitId: parseInt(trait),
+            },
+          });
+          return newChildTrait;
         })
-      ),
-    ]);
+      );
+
+      return [updatedChild, newChildHobby, newChildTraits];
+    });
 
     res.status(200).json({
       message: "success",
@@ -599,7 +600,6 @@ module.exports = {
   getChildren,
   getChildHobbies,
   getChildTraits,
-  getChildrens,
   getHobbies,
   getTraits,
   addChild,
