@@ -7,7 +7,11 @@ const careTakerControllers = require("../controllers/caretaker_controllers");
 router.post("/login", careTakerControllers.login);
 router.post("/signup", careTakerControllers.signup);
 router.get("/get-caretaker", verifyToken, careTakerControllers.getCareTaker);
-router.get("/get-caretaker-type/:id", verifyToken, careTakerControllers.getCareTakerType);
+router.get(
+  "/get-caretaker-type/:id",
+  verifyToken,
+  careTakerControllers.getCareTakerType
+);
 router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
   "/update-profile-image",
@@ -16,7 +20,7 @@ router.post(
 );
 
 /*Children*/
-router.get("/get-children/:id", verifyToken, careTakerControllers.getChildInfo);
+router.get("/get-child/:id", verifyToken, careTakerControllers.getChildInfo);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
 router.get("/get-hobbies", verifyToken, careTakerControllers.getHobbies);
 router.get("/get-traits", verifyToken, careTakerControllers.getTraits);

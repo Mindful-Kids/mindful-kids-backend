@@ -16,10 +16,10 @@ const getLookup = async (req, res) => {
   }
 };
 
-const verifyToken = async (req, res) =>
+const verifySession = async (req, res) =>
   res.status(200).json({ message: "verified" });
 
 module.exports = {
   getLookup,
-  verifyToken,
+  verifySession,
 };

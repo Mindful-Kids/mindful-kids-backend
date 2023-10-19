@@ -3,6 +3,6 @@ const verifyToken = require("../middlewares/verify_token");
 const miscControllers = require("../controllers/misc_controllers");
 
 router.get("/get-lookup", miscControllers.getLookup);
-router.post("/verify-token", verifyToken, miscControllers.verifyToken);
+router.post("/verify-token", verifyToken, miscControllers.verifySession);
 
 module.exports = router;
