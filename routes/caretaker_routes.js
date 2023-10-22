@@ -22,41 +22,14 @@ router.post(
 /*Children*/
 router.get("/get-child/:id", verifyToken, careTakerControllers.getChildInfo);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
-router.get("/get-hobbies", verifyToken, careTakerControllers.getHobbies);
-router.get("/get-traits", verifyToken, careTakerControllers.getTraits);
-router.get(
-  "/get-child-hobbies/:id",
-  verifyToken,
-  careTakerControllers.getChildHobbies
-);
-router.get(
-  "/get-child-traits/:id",
-  verifyToken,
-  careTakerControllers.getChildTraits
-);
 
 router.post("/add-child", verifyToken, careTakerControllers.addChild);
+router.delete("/delete-child", verifyToken, careTakerControllers.deleteChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(
   "/update-child-image",
   [verifyToken, multer.single("image")],
   careTakerControllers.updateChildImage
-);
-router.post(
-  "/get-unselected-enviroments",
-  verifyToken,
-  careTakerControllers.getUnselectedEnviroments
-);
-router.delete("/delete-child", verifyToken, careTakerControllers.deleteChild);
-router.post(
-  "/assign-enviroment",
-  verifyToken,
-  careTakerControllers.assignEnviroments
-);
-router.post(
-  "/get-child-enviroments",
-  verifyToken,
-  careTakerControllers.getChildEnviroments
 );
 
 module.exports = router;

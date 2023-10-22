@@ -249,90 +249,6 @@ const getChildInfo = async (req, res) => {
   }
 };
 
-const getChildHobbies = async (req, res) => {
-  const childId = req.params.id;
-  try {
-    const hobbies = await prisma.hobbies.findMany({
-      where: {
-        ChildHobbies: {
-          some: {
-            childId: parseInt(childId), // You can change this to the desired childId
-          },
-        },
-        status: true,
-      },
-    });
-
-    hobbies.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: hobbies });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children hobbies." });
-  }
-};
-
-const getChildTraits = async (req, res) => {
-  const childId = req.params.id;
-  try {
-    const traits = await prisma.traits.findMany({
-      where: {
-        ChildTraits: {
-          some: {
-            childId: parseInt(childId), // You can change this to the desired childId
-          },
-        },
-        status: true,
-      },
-    });
-
-    traits.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: traits });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children traits." });
-  }
-};
-
-const getHobbies = async (req, res) => {
-  try {
-    const hobbies = await prisma.hobbies.findMany({
-      where: {
-        status: true,
-      },
-    });
-
-    hobbies.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: hobbies });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching hobbies." });
-  }
-};
-
-const getTraits = async (req, res) => {
-  try {
-    const traits = await prisma.traits.findMany({
-      where: {
-        status: true,
-      },
-    });
-
-    traits.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: traits });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching traits." });
-  }
-};
-
 const addChild = async (req, res) => {
   const parentId = req.authData.id;
   const {
@@ -474,14 +390,14 @@ const updateChild = async (req, res) => {
 
       await prisma.childHobbies.deleteMany({
         where: {
-          childId: parseInt(childId),
+          childId: parseInt(id),
         },
       });
       await Promise.all(
         newHobbies.map(async (hobby) => {
           const newChildHobby = await prisma.childHobbies.create({
             data: {
-              childId: parseInt(childId),
+              childId: parseInt(id),
               hobbyId: parseInt(hobby),
             },
           });
@@ -491,14 +407,14 @@ const updateChild = async (req, res) => {
 
       await prisma.childTraits.deleteMany({
         where: {
-          childId: parseInt(childId),
+          childId: parseInt(id),
         },
       });
       await Promise.all(
         newTraits.map(async (trait) => {
           const newChildTrait = await prisma.childTraits.create({
             data: {
-              childId: parseInt(childId),
+              childId: parseInt(id),
               traitId: parseInt(trait),
             },
           });
@@ -556,82 +472,6 @@ const updateChildImage = async (req, res) => {
   }
 };
 
-const getUnselectedEnviroments = async (req, res) => {
-  const { childId } = req.body;
-  try {
-    const environmentsNotInChildEnviroment = await prisma.enviroment.findMany({
-      where: {
-        NOT: {
-          ChildEnviroment: {
-            some: {
-              childId: childId,
-            },
-          },
-        },
-      },
-    });
-    return res
-      .status(200)
-      .json({ message: "success", data: environmentsNotInChildEnviroment });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-const assignEnviroments = async (req, res) => {
-  const { childId, enviromentId } = req.body;
-  if (!childId || !enviromentId)
-    return res.status(422).json({ message: "Required fields are not filled." });
-
-  const childEnviroment = {
-    childId: parseInt(childId),
-    enviromentId: parseInt(enviromentId),
-  };
-  try {
-    const newChildEnviroment = await prisma.childEnviroments.create({
-      data: childEnviroment,
-    });
-
-    res.status(200).json({
-      message: "success",
-      careTakerId: newChildEnviroment.id,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while adding care Taker." });
-  }
-};
-
-const getChildEnviroments = async (req, res) => {
-  const { childId } = req.body;
-  if (!childId)
-    return res.status(422).json({ message: "Required fields are not filled." });
-  try {
-    const environments = await prisma.enviroments.findMany({
-      where: {
-        ChildEnviroments: {
-          some: {
-            childId: childId,
-          },
-        },
-      },
-      select: {
-        id: true,
-        image: true,
-        enviromentPath: true,
-      },
-    });
-
-    return res.status(200).json({ message: "success", data: environments });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
 module.exports = {
   login,
   signup,
@@ -645,17 +485,8 @@ module.exports = {
   getChildren,
   getChildInfo,
 
-  getChildHobbies,
-  getChildTraits,
-  getHobbies,
-  getTraits,
-
   addChild,
   deleteChild,
   updateChild,
   updateChildImage,
-
-  getUnselectedEnviroments,
-  assignEnviroments,
-  getChildEnviroments,
 };
