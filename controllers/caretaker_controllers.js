@@ -134,7 +134,6 @@ const getCareTakerType = async (req, res) => {
         value: true,
       },
     });
-    console.log(type);
     return res.status(200).json({ message: "success", data: type });
   } catch (error) {
     console.log("ERROR", error);
@@ -146,7 +145,7 @@ const getCareTakerType = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, password, genderId, typeId } = req.body;
+  const { firstName, lastName, password, genderId, typeId, email } = req.body;
 
   if (!firstName || !password || !genderId || !typeId || !email)
     return res.status(422).json({ message: "Required fields are not filled." });
@@ -244,90 +243,6 @@ const getChildInfo = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
-  }
-};
-
-const getChildHobbies = async (req, res) => {
-  const childId = req.params.id;
-  try {
-    const hobbies = await prisma.hobbies.findMany({
-      where: {
-        ChildHobbies: {
-          some: {
-            childId: parseInt(childId), // You can change this to the desired childId
-          },
-        },
-        status: true,
-      },
-    });
-
-    hobbies.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: hobbies });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children hobbies." });
-  }
-};
-
-const getChildTraits = async (req, res) => {
-  const childId = req.params.id;
-  try {
-    const traits = await prisma.traits.findMany({
-      where: {
-        ChildTraits: {
-          some: {
-            childId: parseInt(childId), // You can change this to the desired childId
-          },
-        },
-        status: true,
-      },
-    });
-
-    traits.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: traits });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children traits." });
-  }
-};
-
-const getHobbies = async (req, res) => {
-  try {
-    const hobbies = await prisma.hobbies.findMany({
-      where: {
-        status: true,
-      },
-    });
-
-    hobbies.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: hobbies });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching hobbies." });
-  }
-};
-
-const getTraits = async (req, res) => {
-  try {
-    const traits = await prisma.traits.findMany({
-      where: {
-        status: true,
-      },
-    });
-
-    traits.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: traits });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching traits." });
   }
 };
 

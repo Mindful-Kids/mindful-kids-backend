@@ -54,11 +54,9 @@ const getTraits = async (req, res) => {
 
 const verifySession = async (req, res) =>
   res.status(200).json({ message: "verified" });
-
 module.exports = {
   getLookup,
   getHobbies,
   getTraits,
-
   verifySession,
 };
