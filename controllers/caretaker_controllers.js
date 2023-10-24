@@ -134,6 +134,7 @@ const getCareTakerType = async (req, res) => {
         value: true,
       },
     });
+    console.log(type);
     return res.status(200).json({ message: "success", data: type });
   } catch (error) {
     console.log("ERROR", error);
@@ -145,7 +146,7 @@ const getCareTakerType = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, email, password, genderId, typeId } = req.body;
+  const { firstName, lastName, password, genderId, typeId } = req.body;
 
   if (!firstName || !password || !genderId || !typeId || !email)
     return res.status(422).json({ message: "Required fields are not filled." });
@@ -159,7 +160,6 @@ const updateProfile = async (req, res) => {
       data: {
         firstName: firstName,
         lastName: lastName,
-        email: email,
         password: hashedPassword,
         genderId: parseInt(genderId),
         typeId: parseInt(typeId),
@@ -467,12 +467,12 @@ const updateChild = async (req, res) => {
         },
       });
 
-      prisma.childHobbies.deleteMany({
+      await prisma.childHobbies.deleteMany({
         where: {
           childId: parseInt(id),
         },
       });
-      const newChildHobby = await Promise.all(
+      await Promise.all(
         newHobbies.map(async (hobby) => {
           const newChildHobby = await prisma.childHobbies.create({
             data: {
@@ -484,12 +484,12 @@ const updateChild = async (req, res) => {
         })
       );
 
-      prisma.childTraits.deleteMany({
+      await prisma.childTraits.deleteMany({
         where: {
           childId: parseInt(id),
         },
       });
-      const newChildTraits = await Promise.all(
+      await Promise.all(
         newTraits.map(async (trait) => {
           const newChildTrait = await prisma.childTraits.create({
             data: {
@@ -501,7 +501,7 @@ const updateChild = async (req, res) => {
         })
       );
 
-      return [updatedChild, newChildHobby, newChildTraits];
+      return [updatedChild];
     });
 
     res.status(200).json({
@@ -551,101 +551,21 @@ const updateChildImage = async (req, res) => {
   }
 };
 
-const getUnselectedEnviroments = async (req, res) => {
-  const { childId } = req.body;
-  try {
-    const environmentsNotInChildEnviroment = await prisma.enviroment.findMany({
-      where: {
-        NOT: {
-          ChildEnviroment: {
-            some: {
-              childId: childId,
-            },
-          },
-        },
-      },
-    });
-    return res
-      .status(200)
-      .json({ message: "success", data: environmentsNotInChildEnviroment });
-  } catch (error) {
-    console.log("ERROR", error);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-const assignEnviroments = async (req, res) => {
-  const { childId, enviromentId } = req.body;
-  if (!childId || !enviromentId)
-    return res.status(422).json({ message: "Required fields are not filled." });
-
-  const childEnviroment = {
-    childId: parseInt(childId),
-    enviromentId: parseInt(enviromentId),
-  };
-  try {
-    const newChildEnviroment = await prisma.childEnviroments.create({
-      data: childEnviroment,
-    });
-
-    res.status(200).json({
-      message: "success",
-      careTakerId: newChildEnviroment.id,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while adding care Taker." });
-  }
-};
-
-const getChildEnviroments = async (req, res) => {
-  const { childId } = req.body;
-  if (!childId)
-    return res.status(422).json({ message: "Required fields are not filled." });
-  try {
-    const environments = await prisma.enviroments.findMany({
-      where: {
-        ChildEnviroments: {
-          some: {
-            childId: childId,
-          },
-        },
-      },
-      select: {
-        id: true,
-        image: true,
-        enviromentPath: true,
-      },
-    });
-
-    return res.status(200).json({ message: "success", data: environments });
-  } catch (error) {
-
-    console.log("ERROR", error);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
 module.exports = {
   login,
   signup,
+
   getCareTaker,
   getCareTakerType,
+
   updateProfile,
   updateProfileImage,
-  getChildInfo,
+
   getChildren,
-  getChildHobbies,
-  getChildTraits,
-  getHobbies,
-  getTraits,
+  getChildInfo,
+
   addChild,
   deleteChild,
   updateChild,
   updateChildImage,
-  getUnselectedEnviroments,
-  assignEnviroments,
-  getChildEnviroments,
 };

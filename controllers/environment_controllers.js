@@ -18,13 +18,15 @@ const getEnvironments = async (req, res) => {
 
     return res.status(200).json({ message: "success", data: environments });
   } catch (error) {
-    console.log("ERROR", error);
-    return res.status(500).json({ message: "Server Error" });
+    return res
+      .status(500)
+      .json({ message: "Error occurred while retreiving enviroments." });
   }
 };
 
 const addEnvironment = async (req, res) => {
   const { name, startAge, endAge, enviromentPath, addedById } = req.body;
+  console.log(req.file);
   if (
     !name ||
     !startAge ||
@@ -54,7 +56,7 @@ const addEnvironment = async (req, res) => {
   };
 
   try {
-    const newEnviroment = await prisma.enviroment.create({
+    const newEnviroment = await prisma.enviroments.create({
       data: enviroment,
     });
 
