@@ -10,19 +10,20 @@ const getSelectedEnviroments = async (req, res) => {
       where: {
         ChildEnviroments: {
           some: {
-            childId: childId,
+            childId: parseInt(childId),
           },
         },
       },
       select: {
         id: true,
+        name: true,
         image: true,
-        enviromentPath: true,
       },
     });
 
     return res.status(200).json({ message: "success", data: environments });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching enviroments." });
@@ -41,6 +42,11 @@ const getUnselectedEnviroments = async (req, res) => {
             },
           },
         },
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
       },
     });
     return res
