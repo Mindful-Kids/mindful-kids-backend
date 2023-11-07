@@ -12,6 +12,7 @@ const getLookup = async (req, res) => {
     });
     res.status(200).json({ data: lookup });
   } catch (error) {
+    console.log("ERROR", error);
     res.status(500).json({ message: "Fix Lookup" });
   }
 };
