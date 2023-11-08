@@ -343,6 +343,7 @@ const deleteChild = async (req, res) => {
 };
 
 const updateChild = async (req, res) => {
+
   const {
     id,
     firstName,
