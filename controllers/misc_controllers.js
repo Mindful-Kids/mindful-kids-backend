@@ -12,6 +12,7 @@ const getLookup = async (req, res) => {
     });
     res.status(200).json({ data: lookup });
   } catch (error) {
+    console.log("ERROR lookup", error);
     res.status(500).json({ message: "Fix Lookup" });
   }
 };
@@ -54,6 +55,7 @@ const getTraits = async (req, res) => {
 
 const verifySession = async (req, res) =>
   res.status(200).json({ message: "verified" });
+
 module.exports = {
   getLookup,
   getHobbies,
