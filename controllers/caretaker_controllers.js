@@ -196,6 +196,7 @@ const updateProfileImage = async (req, res) => {
       },
     });
     res.status(200).json({
+      image: upload.secure_url,
       message: "success",
     });
   } catch (error) {
