@@ -62,7 +62,7 @@ const login = async (req, res) => {
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
 
-  if (!firstName || !lastName || !email || !password || !genderId || !typeId)
+  if (!firstName || !email || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const existingUser = await prisma.careTakers.findUnique({
@@ -79,7 +79,7 @@ const signup = async (req, res) => {
 
   const careTaker = {
     firstName: firstName,
-    lastName: lastName,
+    lastName: lastName ?? "",
     email: email,
     password: hashedPassword,
     genderId: parseInt(genderId),
@@ -147,7 +147,7 @@ const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
   const { firstName, lastName, password, genderId, typeId } = req.body;
 
-  if (!firstName || !lastName || !password || !genderId || !typeId)
+  if (!firstName || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
   const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -158,7 +158,7 @@ const updateProfile = async (req, res) => {
       },
       data: {
         firstName: firstName,
-        lastName: lastName,
+        lastName: lastName ?? "",
         password: hashedPassword,
         genderId: parseInt(genderId),
         typeId: parseInt(typeId),
@@ -272,7 +272,7 @@ const addChild = async (req, res) => {
 
   const child = {
     firstName: firstName,
-    lastName: lastName,
+    lastName: lastName ?? "",
     description: description,
     parentId: parseInt(parentId),
     dateOfBirth: new Date(dateOfBirth),
@@ -369,7 +369,7 @@ const updateChild = async (req, res) => {
         },
         data: {
           firstName: firstName,
-          lastName: lastName,
+          lastName: lastName ?? "",
           description: description,
           dateOfBirth: new Date(dateOfBirth),
           genderId: parseInt(genderId),
