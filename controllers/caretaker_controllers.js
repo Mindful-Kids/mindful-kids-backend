@@ -451,6 +451,7 @@ const updateChildImage = async (req, res) => {
     res.status(200).json({
       message: "success",
       childId: updatedChild.id,
+      image: upload.secure_url,
     });
   } catch (error) {
     console.log(error);
