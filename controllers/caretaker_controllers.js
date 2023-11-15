@@ -151,8 +151,17 @@ const updateProfile = async (req, res) => {
     return res.status(422).json({ message: "Required fields are not filled." });
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  const existingUser = await prisma.careTakers.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  if (existingUser)
+    return res.status(422).json({ message: "User already exists." });
+
   try {
-    await prisma.careTakers.update({
+    const updatedCareTaker = await prisma.careTakers.update({
       where: {
         id: careTakerId,
       },
@@ -164,8 +173,11 @@ const updateProfile = async (req, res) => {
         typeId: parseInt(typeId),
       },
     });
+    delete updatedCareTaker.status;
     res.status(200).json({
       message: "success",
+      data: updatedCareTaker,
+
     });
   } catch (error) {
     return res
