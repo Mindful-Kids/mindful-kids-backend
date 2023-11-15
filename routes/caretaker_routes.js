@@ -12,7 +12,7 @@ router.get(
   verifyToken,
   careTakerControllers.getCareTakerType
 );
-router.post("/update-profile", careTakerControllers.updateProfile);
+router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
   "/update-profile-image",
   [verifyToken, multer.single("image")],
