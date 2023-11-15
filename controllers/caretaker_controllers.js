@@ -145,9 +145,8 @@ const getCareTakerType = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, password, genderId, typeId } = req.body;
-
-  if (!firstName || !password || !genderId || !typeId)
+  const { firstName, lastName, email, password, genderId, typeId } = req.body;
+  if (!firstName || !email || !password || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
   const hashedPassword = await bcrypt.hash(password, 12);
 
