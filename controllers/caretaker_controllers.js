@@ -3,6 +3,18 @@ const cloudinary = require("../config/cloudinary");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+
+// THis will store different verification codes against their emails
+const verificationCodes = {};
+// Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -58,6 +70,68 @@ const login = async (req, res) => {
     }
   );
 };
+
+// This function will generate six digits verification code.
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000);
+};
+
+// Send verification code to email
+const sendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+  console.log(email)
+  if (!email)
+    return res.status(422).json({ message: "Sender Email is not provided." });
+
+  const existingUser = await prisma.careTakers.findUnique({
+    where: {
+      email: email,
+    },
+  });
+  if (existingUser)
+    return res.status(403).json({ message: "Account with this email already exists." });
+
+  const verificationCode = generateVerificationCode();
+
+  // send mail
+  const mailOptions = {
+    from: `Mindful Kids ${process.env.EMAIL_USER}`,
+    to: email,
+    subject: "Verification Code",
+    text: `Your verification code is: ${verificationCode}`,
+  };
+
+  try {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+        res.status(500).json({ error: "Failed to send verification code" });
+      } else {
+        console.log("Email sent:", info.response);
+        // store verification code in the object
+        verificationCodes[email] = verificationCode;
+        res.status(200).json({ message: "Verification code sent successfully" });
+      }
+    });
+  }
+  catch (error) {
+    res.status(500).json({ error: "Failed to send verification code" });
+  }
+};
+
+const verifyVerificationCode = async (req, res) => {
+  const { email, verificationCode } = req.body;
+  const storeCode = verificationCodes[email];
+  console.log(verificationCodes);
+  if (storeCode && storeCode === verificationCode) {
+    delete verificationCodes[email];
+    return res.status(200).json({ message: "Verification Successfull" });
+  }
+  else {
+    return res.status(400).json({ message: "Invalid verification code" });
+  }
+
+}
 
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
@@ -466,6 +540,8 @@ const updateChildImage = async (req, res) => {
 module.exports = {
   login,
   signup,
+  sendVerificationCode,
+  verifyVerificationCode,
 
   getCareTaker,
   getCareTakerType,
