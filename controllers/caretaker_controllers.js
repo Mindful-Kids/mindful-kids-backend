@@ -402,7 +402,7 @@ const addChild = async (req, res) => {
 };
 
 const deleteChild = async (req, res) => {
-  const { childId } = req.body;
+  const childId = req.params.id;
   try {
     await prisma.children.update({
       where: {

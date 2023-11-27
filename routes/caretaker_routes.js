@@ -26,7 +26,7 @@ router.get("/get-child/:id", verifyToken, careTakerControllers.getChildInfo);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
 
 router.post("/add-child", verifyToken, careTakerControllers.addChild);
-router.delete("/delete-child", verifyToken, careTakerControllers.deleteChild);
+router.delete("/delete-child/:id", verifyToken, careTakerControllers.deleteChild);
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(
   "/update-child-image",
