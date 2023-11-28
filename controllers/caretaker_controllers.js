@@ -391,13 +391,13 @@ const addChild = async (req, res) => {
 };
 
 const deleteChild = async (req, res) => {
-  const { childId } = req.body;
+  const childId = req.params.id;
   try {
     await prisma.children.update({
       where: {
         id: parseInt(childId),
       },
-      data: { status: 0 },
+      data: { status: false },
     });
     return res.status(200).json({ message: "success" });
   } catch (error) {
