@@ -4,10 +4,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const { verificationCodes, generateVerificationCode } = require("../lib/utils");
 
-// THis will store different verification codes against their emails
-const verificationCodes = {};
-// Transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -71,15 +69,9 @@ const login = async (req, res) => {
   );
 };
 
-// This function will generate six digits verification code.
-const generateVerificationCode = () => {
-  return Math.floor(100000 + Math.random() * 900000);
-};
-
-// Send verification code to email
 const sendVerificationCode = async (req, res) => {
   const { email } = req.body;
-  console.log(email)
+  console.log(email);
   if (!email)
     return res.status(422).json({ message: "Sender Email is not provided." });
 
@@ -88,12 +80,14 @@ const sendVerificationCode = async (req, res) => {
       email: email,
     },
   });
+
   if (existingUser)
-    return res.status(403).json({ message: "Account with this email already exists." });
+    return res
+      .status(403)
+      .json({ message: "Account with this email already exists." });
 
   const verificationCode = generateVerificationCode();
 
-  // send mail
   const mailOptions = {
     from: `Mindful Kids ${process.env.EMAIL_USER}`,
     to: email,
@@ -108,13 +102,13 @@ const sendVerificationCode = async (req, res) => {
         res.status(500).json({ error: "Failed to send verification code" });
       } else {
         console.log("Email sent:", info.response);
-        // store verification code in the object
         verificationCodes[email] = verificationCode;
-        res.status(200).json({ message: "Verification code sent successfully" });
+        res
+          .status(200)
+          .json({ message: "Verification code sent successfully" });
       }
     });
-  }
-  catch (error) {
+  } catch (error) {
     res.status(500).json({ error: "Failed to send verification code" });
   }
 };
@@ -126,12 +120,10 @@ const verifyVerificationCode = async (req, res) => {
   if (storeCode && storeCode === verificationCode) {
     delete verificationCodes[email];
     return res.status(200).json({ message: "Verification Successfull" });
-  }
-  else {
+  } else {
     return res.status(400).json({ message: "Invalid verification code" });
   }
-
-}
+};
 
 const signup = async (req, res) => {
   const { firstName, lastName, email, password, genderId, typeId } = req.body;
@@ -219,10 +211,9 @@ const getCareTakerType = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, password, genderId, typeId } = req.body;
-  if (!firstName || !password || !genderId || !typeId)
+  const { firstName, lastName, genderId, typeId } = req.body;
+  if (!firstName || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
-  const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
     const updatedCareTaker = await prisma.careTakers.update({
@@ -232,7 +223,6 @@ const updateProfile = async (req, res) => {
       data: {
         firstName: firstName,
         lastName: lastName ?? "",
-        password: hashedPassword,
         genderId: parseInt(genderId),
         typeId: parseInt(typeId),
       },
@@ -241,7 +231,6 @@ const updateProfile = async (req, res) => {
     res.status(200).json({
       message: "success",
       data: updatedCareTaker,
-
     });
   } catch (error) {
     return res
@@ -307,14 +296,14 @@ const getChildInfo = async (req, res) => {
   const childId = req.params.id;
 
   try {
-    const children = await prisma.children.findUnique({
+    const childInfo = await prisma.children.findUnique({
       where: {
         id: parseInt(childId),
         status: true,
       },
     });
-    delete children.status;
-    return res.status(200).json({ message: "success", data: children });
+    delete childInfo.status;
+    return res.status(200).json({ message: "success", data: childInfo });
   } catch (error) {
     console.log("ERROR", error);
     return res
@@ -457,6 +446,7 @@ const updateChild = async (req, res) => {
           childId: parseInt(id),
         },
       });
+
       await Promise.all(
         newHobbies.map(async (hobby) => {
           const newChildHobby = await prisma.childHobbies.create({
@@ -474,6 +464,7 @@ const updateChild = async (req, res) => {
           childId: parseInt(id),
         },
       });
+
       await Promise.all(
         newTraits.map(async (trait) => {
           const newChildTrait = await prisma.childTraits.create({
