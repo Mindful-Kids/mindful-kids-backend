@@ -408,7 +408,7 @@ const deleteChild = async (req, res) => {
       where: {
         id: parseInt(childId),
       },
-      data: { status: 0 },
+      data: { status: false },
     });
     return res.status(200).json({ message: "success" });
   } catch (error) {
