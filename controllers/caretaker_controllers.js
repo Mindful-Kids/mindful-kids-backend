@@ -219,10 +219,9 @@ const getCareTakerType = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
-  const { firstName, lastName, password, genderId, typeId } = req.body;
-  if (!firstName || !password || !genderId || !typeId)
+  const { firstName, lastName, genderId, typeId } = req.body;
+  if (!firstName || !genderId || !typeId)
     return res.status(422).json({ message: "Required fields are not filled." });
-  const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
     const updatedCareTaker = await prisma.careTakers.update({
@@ -232,7 +231,6 @@ const updateProfile = async (req, res) => {
       data: {
         firstName: firstName,
         lastName: lastName ?? "",
-        password: hashedPassword,
         genderId: parseInt(genderId),
         typeId: parseInt(typeId),
       },
