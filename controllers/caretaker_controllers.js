@@ -294,11 +294,13 @@ const getChildren = async (req, res) => {
 
 const getChildInfo = async (req, res) => {
   const childId = req.params.id;
+  const parentId = req.authData.id;
 
   try {
     const childInfo = await prisma.children.findUnique({
       where: {
         id: parseInt(childId),
+        parentId: parseInt(parentId),
         status: true,
       },
     });
@@ -409,6 +411,7 @@ const deleteChild = async (req, res) => {
 };
 
 const updateChild = async (req, res) => {
+  // const parentId = req.authData.id;
   const {
     id,
     firstName,
@@ -418,6 +421,7 @@ const updateChild = async (req, res) => {
     hobbies,
     traits,
     description,
+    environments,
   } = req.body;
 
   if (!id || !firstName || !genderId || !dateOfBirth || !hobbies || !traits)
@@ -425,12 +429,17 @@ const updateChild = async (req, res) => {
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
   const newTraits = traits.split(",").map((id) => parseInt(id));
+  let newEnvironments = null;
+  if (environments) {
+    newEnvironments = environments.split(",").map((id) => parseInt(id));
+  }
 
   try {
     const [updatedChild] = await prisma.$transaction(async (prisma) => {
       const updatedChild = await prisma.children.update({
         where: {
           id: parseInt(id),
+
         },
         data: {
           firstName: firstName,
@@ -440,6 +449,27 @@ const updateChild = async (req, res) => {
           genderId: parseInt(genderId),
         },
       });
+
+      if (environments) {
+        await prisma.childEnviroments.deleteMany({
+          where: {
+            childId: parseInt(id),
+          },
+        });
+
+        await Promise.all(
+          newEnvironments.map(async (enviroment) => {
+            const newChildEnviroment = await prisma.childEnviroments.create({
+              data: {
+                childId: parseInt(id),
+                enviromentId: parseInt(enviroment)
+              },
+            });
+            return newChildEnviroment;
+          })
+        );
+      }
+
 
       await prisma.childHobbies.deleteMany({
         where: {

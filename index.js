@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/", async (req, res) => {
-  res.status(200).json({ message: "API is running!" });
+  res.status(200).json({ message: "Backend is running!" });
 });
 
 app.use("/api/misc", require("./routes/misc_routes"));
