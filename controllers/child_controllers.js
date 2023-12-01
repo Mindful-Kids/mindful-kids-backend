@@ -92,7 +92,7 @@ const getChildHobbies = async (req, res) => {
       where: {
         ChildHobbies: {
           some: {
-            childId: parseInt(childId), // You can change this to the desired childId
+            childId: parseInt(childId),
           },
         },
         status: true,
@@ -116,7 +116,7 @@ const getChildTraits = async (req, res) => {
       where: {
         ChildTraits: {
           some: {
-            childId: parseInt(childId), // You can change this to the desired childId
+            childId: parseInt(childId),
           },
         },
         status: true,

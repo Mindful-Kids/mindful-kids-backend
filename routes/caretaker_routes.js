@@ -22,7 +22,7 @@ router.post(
 );
 
 /*Children*/
-router.get("/get-child/:id", verifyToken, careTakerControllers.getChildInfo);
+router.get("/get-child/:id", verifyToken, careTakerControllers.getChildDetails);
 router.get("/get-children", verifyToken, careTakerControllers.getChildren);
 
 router.post("/add-child", verifyToken, careTakerControllers.addChild);

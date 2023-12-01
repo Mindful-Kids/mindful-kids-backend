@@ -59,7 +59,6 @@ const login = async (req, res) => {
     { expiresIn: "2h" },
     (err, token) => {
       if (err) {
-        console.log(err);
         res.status(500).json({
           message: "An error occurred while generating token.",
         });
@@ -71,7 +70,6 @@ const login = async (req, res) => {
 
 const sendVerificationCode = async (req, res) => {
   const { email } = req.body;
-  console.log(email);
   if (!email)
     return res.status(422).json({ message: "Sender Email is not provided." });
 
@@ -98,10 +96,8 @@ const sendVerificationCode = async (req, res) => {
   try {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email:", error);
         res.status(500).json({ error: "Failed to send verification code" });
       } else {
-        console.log("Email sent:", info.response);
         verificationCodes[email] = verificationCode;
         res
           .status(200)
@@ -116,7 +112,6 @@ const sendVerificationCode = async (req, res) => {
 const verifyVerificationCode = async (req, res) => {
   const { email, verificationCode } = req.body;
   const storeCode = verificationCodes[email];
-  console.log(verificationCodes);
   if (storeCode && storeCode === verificationCode) {
     delete verificationCodes[email];
     return res.status(200).json({ message: "Verification Successfull" });
@@ -182,7 +177,6 @@ const getCareTaker = async (req, res) => {
     delete careTaker.status;
     return res.status(200).json({ message: "success", data: careTaker });
   } catch (error) {
-    console.log("ERROR", error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
@@ -202,7 +196,6 @@ const getCareTakerType = async (req, res) => {
     });
     return res.status(200).json({ message: "success", data: type });
   } catch (error) {
-    console.log("ERROR", error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
@@ -246,7 +239,6 @@ const updateProfileImage = async (req, res) => {
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
     .catch((err) => {
-      console.log(err);
       return res
         .status(500)
         .json({ message: "Error occurred while uploading image." });
@@ -265,7 +257,6 @@ const updateProfileImage = async (req, res) => {
       message: "success",
     });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while updating profile image." });
@@ -285,29 +276,6 @@ const getChildren = async (req, res) => {
     childrens.forEach((item) => delete item.status);
     return res.status(200).json({ message: "success", data: childrens });
   } catch (error) {
-    console.log("ERROR", error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children." });
-  }
-};
-
-const getChildInfo = async (req, res) => {
-  const childId = req.params.id;
-  const parentId = req.authData.id;
-
-  try {
-    const childInfo = await prisma.children.findUnique({
-      where: {
-        id: parseInt(childId),
-        parentId: parseInt(parentId),
-        status: true,
-      },
-    });
-    delete childInfo.status;
-    return res.status(200).json({ message: "success", data: childInfo });
-  } catch (error) {
-    console.log("ERROR", error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
@@ -385,12 +353,90 @@ const addChild = async (req, res) => {
       childId: newChild.id,
     });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while adding child." });
   }
 };
+
+const getChildDetails = async (req, res) => {
+  const childId = req.params.id;
+  const parentId = req.authData.id;
+  try {
+    const childDetails = await prisma.$transaction(async (prisma) => {
+      const child = await prisma.children.findUnique({
+        where: {
+          id: parseInt(childId),
+          parentId: parseInt(parentId),
+          status: true,
+        },
+      });
+      delete child.status;
+
+      const hobbies = await prisma.hobbies.findMany({
+        where: {
+          ChildHobbies: {
+            some: {
+              childId: parseInt(childId),
+            },
+          },
+          status: true,
+        },
+      });
+      hobbies.forEach((item) => delete item.status);
+
+      const traits = await prisma.traits.findMany({
+        where: {
+          ChildTraits: {
+            some: {
+              childId: parseInt(childId),
+            },
+          },
+          status: true,
+        },
+      });
+      traits.forEach((item) => delete item.status);
+
+      const allEnvironments = await prisma.enviroments.findMany({
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+
+      const childEnvironments = await prisma.enviroments.findMany({
+        where: {
+          ChildEnviroments: {
+            some: {
+              childId: parseInt(childId),
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const environmentsWithSelected = allEnvironments.map((env) => ({
+        ...env,
+        isSelected: childEnvironments.some((childEnv) => childEnv.id === env.id),
+      }));
+
+      return {
+        child,
+        hobbies,
+        traits,
+        environments: environmentsWithSelected,
+      };
+    });
+    return res.status(200).json({ message: "success", data: childDetails });
+  }
+  catch (error) {
+    return res.status(500).json({ message: "Error occurred while fetching children." });
+  }
+
+}
 
 const deleteChild = async (req, res) => {
   const childId = req.params.id;
@@ -403,7 +449,6 @@ const deleteChild = async (req, res) => {
     });
     return res.status(200).json({ message: "success" });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while deleting child." });
@@ -439,7 +484,6 @@ const updateChild = async (req, res) => {
       const updatedChild = await prisma.children.update({
         where: {
           id: parseInt(id),
-
         },
         data: {
           firstName: firstName,
@@ -450,12 +494,13 @@ const updateChild = async (req, res) => {
         },
       });
 
+      await prisma.childEnviroments.deleteMany({
+        where: {
+          childId: parseInt(id),
+        },
+      });
+
       if (environments) {
-        await prisma.childEnviroments.deleteMany({
-          where: {
-            childId: parseInt(id),
-          },
-        });
 
         await Promise.all(
           newEnvironments.map(async (enviroment) => {
@@ -469,7 +514,6 @@ const updateChild = async (req, res) => {
           })
         );
       }
-
 
       await prisma.childHobbies.deleteMany({
         where: {
@@ -515,7 +559,6 @@ const updateChild = async (req, res) => {
       childId: updatedChild.id,
     });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while updating child." });
@@ -530,7 +573,6 @@ const updateChildImage = async (req, res) => {
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
     .catch((err) => {
-      console.log(err);
       return res
         .status(500)
         .json({ message: "Error occurred while uploading image." });
@@ -551,7 +593,6 @@ const updateChildImage = async (req, res) => {
       image: upload.secure_url,
     });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while updating Image." });
@@ -571,7 +612,8 @@ module.exports = {
   updateProfileImage,
 
   getChildren,
-  getChildInfo,
+  // getChildInfo,
+  getChildDetails,
 
   addChild,
   deleteChild,
