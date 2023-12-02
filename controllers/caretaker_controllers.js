@@ -359,85 +359,6 @@ const addChild = async (req, res) => {
   }
 };
 
-const getChildDetails = async (req, res) => {
-  const childId = req.params.id;
-  const parentId = req.authData.id;
-  try {
-    const childDetails = await prisma.$transaction(async (prisma) => {
-      const child = await prisma.children.findUnique({
-        where: {
-          id: parseInt(childId),
-          parentId: parseInt(parentId),
-          status: true,
-        },
-      });
-      delete child.status;
-
-      const hobbies = await prisma.hobbies.findMany({
-        where: {
-          ChildHobbies: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-          status: true,
-        },
-      });
-      hobbies.forEach((item) => delete item.status);
-
-      const traits = await prisma.traits.findMany({
-        where: {
-          ChildTraits: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-          status: true,
-        },
-      });
-      traits.forEach((item) => delete item.status);
-
-      const allEnvironments = await prisma.enviroments.findMany({
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      });
-
-      const childEnvironments = await prisma.enviroments.findMany({
-        where: {
-          ChildEnviroments: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const environmentsWithSelected = allEnvironments.map((env) => ({
-        ...env,
-        isSelected: childEnvironments.some((childEnv) => childEnv.id === env.id),
-      }));
-
-      return {
-        child,
-        hobbies,
-        traits,
-        environments: environmentsWithSelected,
-      };
-    });
-    return res.status(200).json({ message: "success", data: childDetails });
-  }
-  catch (error) {
-    return res.status(500).json({ message: "Error occurred while fetching children." });
-  }
-
-}
-
 const deleteChild = async (req, res) => {
   const childId = req.params.id;
   try {
@@ -456,7 +377,6 @@ const deleteChild = async (req, res) => {
 };
 
 const updateChild = async (req, res) => {
-  // const parentId = req.authData.id;
   const {
     id,
     firstName,
@@ -466,7 +386,6 @@ const updateChild = async (req, res) => {
     hobbies,
     traits,
     description,
-    environments,
   } = req.body;
 
   if (!id || !firstName || !genderId || !dateOfBirth || !hobbies || !traits)
@@ -474,10 +393,6 @@ const updateChild = async (req, res) => {
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
   const newTraits = traits.split(",").map((id) => parseInt(id));
-  let newEnvironments = null;
-  if (environments) {
-    newEnvironments = environments.split(",").map((id) => parseInt(id));
-  }
 
   try {
     const [updatedChild] = await prisma.$transaction(async (prisma) => {
@@ -493,27 +408,6 @@ const updateChild = async (req, res) => {
           genderId: parseInt(genderId),
         },
       });
-
-      await prisma.childEnviroments.deleteMany({
-        where: {
-          childId: parseInt(id),
-        },
-      });
-
-      if (environments) {
-
-        await Promise.all(
-          newEnvironments.map(async (enviroment) => {
-            const newChildEnviroment = await prisma.childEnviroments.create({
-              data: {
-                childId: parseInt(id),
-                enviromentId: parseInt(enviroment)
-              },
-            });
-            return newChildEnviroment;
-          })
-        );
-      }
 
       await prisma.childHobbies.deleteMany({
         where: {
@@ -565,6 +459,43 @@ const updateChild = async (req, res) => {
   }
 };
 
+const assignEnvironment = async (req, res) => {
+  const { childId, environments } = req.body;
+  if (!childId)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  let newEnvironments = environments.split(",").map((id) => parseInt(id));
+
+  try {
+    await prisma.childEnviroments.deleteMany({
+      where: {
+        childId: parseInt(id),
+      },
+    });
+
+    const addedEnvironments = await Promise.all(
+      newEnvironments.map(async (enviroment) => {
+        const newChildEnviroment = await prisma.childEnviroments.create({
+          data: {
+            childId: parseInt(id),
+            enviromentId: parseInt(enviroment),
+          },
+        });
+        return newChildEnviroment;
+      })
+    );
+
+    res.status(200).json({
+      message: "success",
+      careTakerId: addedEnvironments,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while adding care Taker." });
+  }
+};
+
 const updateChildImage = async (req, res) => {
   const { childId } = req.body;
   if (!req.file)
@@ -612,11 +543,10 @@ module.exports = {
   updateProfileImage,
 
   getChildren,
-  // getChildInfo,
-  getChildDetails,
 
   addChild,
   deleteChild,
   updateChild,
+  assignEnvironment,
   updateChildImage,
 };

@@ -22,10 +22,5 @@ router.get(
   verifyToken,
   childControllers.getUnselectedEnviroments
 );
-router.post(
-  "/assign-enviroment",
-  verifyToken,
-  childControllers.assignEnviroment
-);
 
 module.exports = router;

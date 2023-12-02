@@ -59,32 +59,6 @@ const getUnselectedEnviroments = async (req, res) => {
   }
 };
 
-const assignEnviroment = async (req, res) => {
-  const { childId, enviromentId } = req.body;
-  if (!childId || !enviromentId)
-    return res.status(422).json({ message: "Required fields are not filled." });
-
-  const childEnviroment = {
-    childId: parseInt(childId),
-    enviromentId: parseInt(enviromentId),
-  };
-  try {
-    const newChildEnviroment = await prisma.childEnviroments.create({
-      data: childEnviroment,
-    });
-
-    res.status(200).json({
-      message: "success",
-      careTakerId: newChildEnviroment.id,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Error occurred while adding care Taker." });
-  }
-};
-
 const getChildHobbies = async (req, res) => {
   const childId = req.params.id;
   try {
@@ -136,6 +110,5 @@ module.exports = {
   getChildHobbies,
   getChildTraits,
   getUnselectedEnviroments,
-  assignEnviroment,
   getSelectedEnviroments,
 };
