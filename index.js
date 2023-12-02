@@ -8,13 +8,12 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/", async (req, res) => {
-  res.status(200).json({ message: "Backend is running!" });
+  res.send("🚀API is running!");
 });
 
 app.use("/api/misc", require("./routes/misc_routes"));
 app.use("/api/admin", require("./routes/admin_routes"));
 app.use("/api/caretaker", require("./routes/caretaker_routes"));
-app.use("/api/child", require("./routes/child_routes"));
 app.use("/api/environment", require("./routes/environment_routes"));
 
 app.listen(3000, () => console.log(`Server is running on PORT ${3000}`));
