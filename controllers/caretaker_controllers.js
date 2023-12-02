@@ -30,7 +30,6 @@ const login = async (req, res) => {
       .status(500)
       .json({ message: "Error occurred while logging in." });
   }
-
   let isValidPassword = false;
   try {
     isValidPassword = await bcrypt.compare(password, existingUser.password);
@@ -164,44 +163,6 @@ const signup = async (req, res) => {
   }
 };
 
-const getCareTaker = async (req, res) => {
-  const parentId = req.authData.id;
-  try {
-    const careTaker = await prisma.careTakers.findUnique({
-      where: {
-        id: parseInt(parentId),
-        status: true,
-      },
-    });
-
-    delete careTaker.status;
-    return res.status(200).json({ message: "success", data: careTaker });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children." });
-  }
-};
-
-const getCareTakerType = async (req, res) => {
-  const typeId = req.params.id;
-  try {
-    const type = await prisma.lookup.findUnique({
-      where: {
-        id: parseInt(typeId),
-      },
-      select: {
-        value: true,
-      },
-    });
-    return res.status(200).json({ message: "success", data: type });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error occurred while fetching children." });
-  }
-};
-
 const updateProfile = async (req, res) => {
   const careTakerId = req.authData.id;
   const { firstName, lastName, genderId, typeId } = req.body;
@@ -266,16 +227,47 @@ const updateProfileImage = async (req, res) => {
 const getChildren = async (req, res) => {
   const parentId = req.authData.id;
   try {
-    const childrens = await prisma.children.findMany({
-      where: {
-        parentId: parseInt(parentId),
-        status: true,
-      },
+    const children = await prisma.$transaction(async (prisma) => {
+      const children = await prisma.children.findMany({
+        where: {
+          parentId: parseInt(parentId),
+          status: true,
+        },
+      });
+      children.forEach((item) => delete item.status);
+
+      await Promise.all(
+        children.map(async (child) => {
+          const traits = await prisma.childTraits.findMany({
+            where: {
+              childId: parseInt(child.id),
+            },
+          });
+
+          child.traits = traits.map((item) => item.traitId);
+        })
+      );
+
+      await Promise.all(
+        children.map(async (child) => {
+          const hobbies = await prisma.childHobbies.findMany({
+            where: {
+              childId: parseInt(child.id),
+            },
+          });
+          child.hobbies = hobbies.map((item) => item.hobbyId);
+        })
+      );
+
+      return children;
     });
 
-    childrens.forEach((item) => delete item.status);
-    return res.status(200).json({ message: "success", data: childrens });
+    return res.status(200).json({
+      message: "success",
+      data: children,
+    });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while fetching children." });
@@ -359,85 +351,6 @@ const addChild = async (req, res) => {
   }
 };
 
-const getChildDetails = async (req, res) => {
-  const childId = req.params.id;
-  const parentId = req.authData.id;
-  try {
-    const childDetails = await prisma.$transaction(async (prisma) => {
-      const child = await prisma.children.findUnique({
-        where: {
-          id: parseInt(childId),
-          parentId: parseInt(parentId),
-          status: true,
-        },
-      });
-      delete child.status;
-
-      const hobbies = await prisma.hobbies.findMany({
-        where: {
-          ChildHobbies: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-          status: true,
-        },
-      });
-      hobbies.forEach((item) => delete item.status);
-
-      const traits = await prisma.traits.findMany({
-        where: {
-          ChildTraits: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-          status: true,
-        },
-      });
-      traits.forEach((item) => delete item.status);
-
-      const allEnvironments = await prisma.enviroments.findMany({
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      });
-
-      const childEnvironments = await prisma.enviroments.findMany({
-        where: {
-          ChildEnviroments: {
-            some: {
-              childId: parseInt(childId),
-            },
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const environmentsWithSelected = allEnvironments.map((env) => ({
-        ...env,
-        isSelected: childEnvironments.some((childEnv) => childEnv.id === env.id),
-      }));
-
-      return {
-        child,
-        hobbies,
-        traits,
-        environments: environmentsWithSelected,
-      };
-    });
-    return res.status(200).json({ message: "success", data: childDetails });
-  }
-  catch (error) {
-    return res.status(500).json({ message: "Error occurred while fetching children." });
-  }
-
-}
-
 const deleteChild = async (req, res) => {
   const childId = req.params.id;
   try {
@@ -456,7 +369,6 @@ const deleteChild = async (req, res) => {
 };
 
 const updateChild = async (req, res) => {
-  // const parentId = req.authData.id;
   const {
     id,
     firstName,
@@ -466,7 +378,6 @@ const updateChild = async (req, res) => {
     hobbies,
     traits,
     description,
-    environments,
   } = req.body;
 
   if (!id || !firstName || !genderId || !dateOfBirth || !hobbies || !traits)
@@ -474,10 +385,6 @@ const updateChild = async (req, res) => {
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
   const newTraits = traits.split(",").map((id) => parseInt(id));
-  let newEnvironments = null;
-  if (environments) {
-    newEnvironments = environments.split(",").map((id) => parseInt(id));
-  }
 
   try {
     const [updatedChild] = await prisma.$transaction(async (prisma) => {
@@ -493,27 +400,6 @@ const updateChild = async (req, res) => {
           genderId: parseInt(genderId),
         },
       });
-
-      await prisma.childEnviroments.deleteMany({
-        where: {
-          childId: parseInt(id),
-        },
-      });
-
-      if (environments) {
-
-        await Promise.all(
-          newEnvironments.map(async (enviroment) => {
-            const newChildEnviroment = await prisma.childEnviroments.create({
-              data: {
-                childId: parseInt(id),
-                enviromentId: parseInt(enviroment)
-              },
-            });
-            return newChildEnviroment;
-          })
-        );
-      }
 
       await prisma.childHobbies.deleteMany({
         where: {
@@ -565,6 +451,45 @@ const updateChild = async (req, res) => {
   }
 };
 
+const assignEnvironment = async (req, res) => {
+  const { childId, environments } = req.body;
+  if (!childId)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  let newEnvironments = environments.split(",").map((id) => parseInt(id));
+
+  console.log(newEnvironments);
+
+  try {
+    await prisma.$transaction(async (prisma) => {
+      await prisma.childEnviroments.deleteMany({
+        where: {
+          childId: parseInt(childId),
+        },
+      });
+      await Promise.all(
+        newEnvironments.map(async (enviroment) => {
+          const newChildEnviroment = await prisma.childEnviroments.create({
+            data: {
+              childId: parseInt(childId),
+              enviromentId: parseInt(enviroment),
+            },
+          });
+        })
+      );
+    });
+
+    res.status(200).json({
+      message: "success",
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Error occurred while assigning environment." });
+  }
+};
+
 const updateChildImage = async (req, res) => {
   const { childId } = req.body;
   if (!req.file)
@@ -605,18 +530,13 @@ module.exports = {
   sendVerificationCode,
   verifyVerificationCode,
 
-  getCareTaker,
-  getCareTakerType,
-
   updateProfile,
   updateProfileImage,
 
   getChildren,
-  // getChildInfo,
-  getChildDetails,
-
   addChild,
   deleteChild,
   updateChild,
+  assignEnvironment,
   updateChildImage,
 };
