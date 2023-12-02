@@ -466,33 +466,35 @@ const assignEnvironment = async (req, res) => {
 
   let newEnvironments = environments.split(",").map((id) => parseInt(id));
 
-  try {
-    await prisma.childEnviroments.deleteMany({
-      where: {
-        childId: parseInt(id),
-      },
-    });
+  console.log(newEnvironments);
 
-    const addedEnvironments = await Promise.all(
-      newEnvironments.map(async (enviroment) => {
-        const newChildEnviroment = await prisma.childEnviroments.create({
-          data: {
-            childId: parseInt(id),
-            enviromentId: parseInt(enviroment),
-          },
-        });
-        return newChildEnviroment;
-      })
-    );
+  try {
+    await prisma.$transaction(async (prisma) => {
+      await prisma.childEnviroments.deleteMany({
+        where: {
+          childId: parseInt(childId),
+        },
+      });
+      await Promise.all(
+        newEnvironments.map(async (enviroment) => {
+          const newChildEnviroment = await prisma.childEnviroments.create({
+            data: {
+              childId: parseInt(childId),
+              enviromentId: parseInt(enviroment),
+            },
+          });
+        })
+      );
+    });
 
     res.status(200).json({
       message: "success",
-      careTakerId: addedEnvironments,
     });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
-      .json({ message: "Error occurred while adding care Taker." });
+      .json({ message: "Error occurred while assigning environment." });
   }
 };
 
