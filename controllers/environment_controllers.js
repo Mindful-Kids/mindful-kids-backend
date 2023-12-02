@@ -72,7 +72,85 @@ const addEnvironment = async (req, res) => {
   }
 };
 
+const getSelectedEnviroments = async (req, res) => {
+  const childId = req.params.id;
+  if (!childId)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  try {
+    const environments = await prisma.$transaction(async (prisma) => {
+      const allEnvironments = await prisma.enviroments.findMany({
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+
+      const childEnvironments = await prisma.enviroments.findMany({
+        where: {
+          ChildEnviroments: {
+            some: {
+              childId: parseInt(childId),
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const environments = allEnvironments.map((env) => ({
+        ...env,
+        isSelected: childEnvironments.some(
+          (childEnv) => childEnv.id === env.id
+        ),
+      }));
+
+      return environments;
+    });
+
+    return res.status(200).json({ message: "success", data: environments });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching enviroments." });
+  }
+};
+
+const getUnselectedEnviroments = async (req, res) => {
+  const childId = req.params.id;
+  try {
+    const unselectedEnvironments = await prisma.enviroments.findMany({
+      where: {
+        NOT: {
+          ChildEnviroments: {
+            some: {
+              childId: parseInt(childId),
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: "success", data: unselectedEnvironments });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while retreiving enviroments." });
+  }
+};
+
 module.exports = {
   getEnvironments,
   addEnvironment,
+
+  getUnselectedEnviroments,
+  getSelectedEnviroments,
 };

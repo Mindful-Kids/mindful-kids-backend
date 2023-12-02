@@ -14,12 +14,6 @@ router.post(
   careTakerControllers.verifyVerificationCode
 );
 router.post("/signup", careTakerControllers.signup);
-router.get("/get-caretaker", verifyToken, careTakerControllers.getCareTaker);
-router.get(
-  "/get-caretaker-type/:id",
-  verifyToken,
-  careTakerControllers.getCareTakerType
-);
 router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
   "/update-profile-image",
