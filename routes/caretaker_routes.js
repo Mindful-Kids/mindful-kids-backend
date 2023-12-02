@@ -37,7 +37,7 @@ router.delete(
 );
 router.post("/update-child", verifyToken, careTakerControllers.updateChild);
 router.post(
-  "/assign-enviroment",
+  "/assign-environment",
   verifyToken,
   careTakerControllers.assignEnvironment
 );
