@@ -235,27 +235,43 @@ const getChildren = async (req, res) => {
         },
       });
       children.forEach((item) => delete item.status);
+      children.forEach((item) => delete item.parentId);
 
       await Promise.all(
         children.map(async (child) => {
-          const traits = await prisma.childTraits.findMany({
+          const traits = await prisma.traits.findMany({
             where: {
-              childId: parseInt(child.id),
+              ChildTraits: {
+                some: {
+                  childId: parseInt(child.id),
+                },
+              },
+              status: true,
             },
           });
-
-          child.traits = traits.map((item) => item.traitId);
+          child.traits = traits.map((item) => {
+            delete item.status;
+            return item;
+          });
         })
       );
 
       await Promise.all(
         children.map(async (child) => {
-          const hobbies = await prisma.childHobbies.findMany({
+          const hobbies = await prisma.hobbies.findMany({
             where: {
-              childId: parseInt(child.id),
+              ChildHobbies: {
+                some: {
+                  childId: parseInt(child.id),
+                },
+              },
+              status: true,
             },
           });
-          child.hobbies = hobbies.map((item) => item.hobbyId);
+          child.hobbies = hobbies.map((item) => {
+            delete item.status;
+            return item;
+          });
         })
       );
 
@@ -273,6 +289,7 @@ const getChildren = async (req, res) => {
       .json({ message: "Error occurred while fetching children." });
   }
 };
+
 
 const addChild = async (req, res) => {
   const parentId = req.authData.id;
@@ -369,6 +386,7 @@ const deleteChild = async (req, res) => {
 };
 
 const updateChild = async (req, res) => {
+  // const parentId = req.authData.id;
   const {
     id,
     firstName,
@@ -378,6 +396,7 @@ const updateChild = async (req, res) => {
     hobbies,
     traits,
     description,
+    environments,
   } = req.body;
 
   if (!id || !firstName || !genderId || !dateOfBirth || !hobbies || !traits)
@@ -385,6 +404,10 @@ const updateChild = async (req, res) => {
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
   const newTraits = traits.split(",").map((id) => parseInt(id));
+  let newEnvironments = null;
+  if (environments) {
+    newEnvironments = environments.split(",").map((id) => parseInt(id));
+  }
 
   try {
     const [updatedChild] = await prisma.$transaction(async (prisma) => {
@@ -400,6 +423,27 @@ const updateChild = async (req, res) => {
           genderId: parseInt(genderId),
         },
       });
+
+      await prisma.childEnviroments.deleteMany({
+        where: {
+          childId: parseInt(id),
+        },
+      });
+
+      if (environments) {
+
+        await Promise.all(
+          newEnvironments.map(async (enviroment) => {
+            const newChildEnviroment = await prisma.childEnviroments.create({
+              data: {
+                childId: parseInt(id),
+                enviromentId: parseInt(enviroment)
+              },
+            });
+            return newChildEnviroment;
+          })
+        );
+      }
 
       await prisma.childHobbies.deleteMany({
         where: {
