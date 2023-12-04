@@ -15,15 +15,15 @@ const transporter = nodemailer.createTransport({
 });
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
+  const { Email, Password } = req.body;
+  if (!Email || !Password)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   let existingUser;
   try {
     existingUser = await prisma.careTakers.findUnique({
       where: {
-        email: email,
+        email: Email,
         status: true,
       },
     });
@@ -34,7 +34,7 @@ const login = async (req, res) => {
   }
   let isValidPassword = false;
   try {
-    isValidPassword = await bcrypt.compare(password, existingUser.password);
+    isValidPassword = await bcrypt.compare(Password, existingUser.password);
   } catch (err) {
     return res
       .status(500)
