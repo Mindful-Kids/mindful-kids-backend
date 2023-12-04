@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const { verificationCodes, generateVerificationCode } = require("../lib/utils");
+const { userOTPs, generateOTP } = require("../lib/utils");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -16,6 +16,8 @@ const transporter = nodemailer.createTransport({
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(422).json({ message: "Required fields are not filled." });
 
   let existingUser;
   try {
@@ -67,7 +69,7 @@ const login = async (req, res) => {
   );
 };
 
-const sendVerificationCode = async (req, res) => {
+const sendOTP = async (req, res) => {
   const { email } = req.body;
   if (!email)
     return res.status(422).json({ message: "Sender Email is not provided." });
@@ -83,24 +85,22 @@ const sendVerificationCode = async (req, res) => {
       .status(403)
       .json({ message: "Account with this email already exists." });
 
-  const verificationCode = generateVerificationCode();
+  const otp = generateOTP();
 
   const mailOptions = {
     from: `Mindful Kids ${process.env.EMAIL_USER}`,
     to: email,
-    subject: "Verification Code",
-    text: `Your verification code is: ${verificationCode}`,
+    subject: "Mindful Kids OTP",
+    text: `Your One-time password(OTP) is: ${otp}`,
   };
 
   try {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        res.status(500).json({ error: "Failed to send verification code" });
+        res.status(500).json({ error: "Failed to send OTP" });
       } else {
-        verificationCodes[email] = verificationCode;
-        res
-          .status(200)
-          .json({ message: "Verification code sent successfully" });
+        userOTPs[email] = otp;
+        res.status(200).json({ message: "OTP sent successfully" });
       }
     });
   } catch (error) {
@@ -108,11 +108,12 @@ const sendVerificationCode = async (req, res) => {
   }
 };
 
-const verifyVerificationCode = async (req, res) => {
-  const { email, verificationCode } = req.body;
-  const storeCode = verificationCodes[email];
-  if (storeCode && storeCode === verificationCode) {
-    delete verificationCodes[email];
+const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  const storedOTP = userOTPs[email];
+
+  if (storedOTP && storedOTP === otp) {
+    delete userOTPs[email];
     return res.status(200).json({ message: "Verification Successfull" });
   } else {
     return res.status(400).json({ message: "Invalid verification code" });
@@ -290,7 +291,6 @@ const getChildren = async (req, res) => {
   }
 };
 
-
 const addChild = async (req, res) => {
   const parentId = req.authData.id;
   const {
@@ -431,13 +431,12 @@ const updateChild = async (req, res) => {
       });
 
       if (environments) {
-
         await Promise.all(
           newEnvironments.map(async (enviroment) => {
             const newChildEnviroment = await prisma.childEnviroments.create({
               data: {
                 childId: parseInt(id),
-                enviromentId: parseInt(enviroment)
+                enviromentId: parseInt(enviroment),
               },
             });
             return newChildEnviroment;
@@ -571,8 +570,8 @@ const updateChildImage = async (req, res) => {
 module.exports = {
   login,
   signup,
-  sendVerificationCode,
-  verifyVerificationCode,
+  sendOTP,
+  verifyOTP,
 
   updateProfile,
   updateProfileImage,
