@@ -404,13 +404,15 @@ const updateChild = async (req, res) => {
 
   const newHobbies = hobbies.split(",").map((id) => parseInt(id));
   const newTraits = traits.split(",").map((id) => parseInt(id));
+  const updatedHobbies = [];
+  const updatedTraits = [];
   let newEnvironments = null;
   if (environments) {
     newEnvironments = environments.split(",").map((id) => parseInt(id));
   }
 
   try {
-    const [updatedChild] = await prisma.$transaction(async (prisma) => {
+    const updatedChild = await prisma.$transaction(async (prisma) => {
       const updatedChild = await prisma.children.update({
         where: {
           id: parseInt(id),
@@ -453,13 +455,24 @@ const updateChild = async (req, res) => {
 
       await Promise.all(
         newHobbies.map(async (hobby) => {
-          const newChildHobby = await prisma.childHobbies.create({
+          const createdChildHhobbies = await prisma.childHobbies.create({
             data: {
               childId: parseInt(id),
               hobbyId: parseInt(hobby),
             },
           });
-          return newChildHobby;
+          const hobbiesData = await prisma.hobbies.findUnique({
+            where: {
+              id: createdChildHhobbies.hobbyId,
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+          updatedHobbies.push(hobbiesData);
+          updatedChild.hobbies = updatedHobbies;
+          return createdChildHhobbies;
         })
       );
 
@@ -471,24 +484,35 @@ const updateChild = async (req, res) => {
 
       await Promise.all(
         newTraits.map(async (trait) => {
-          const newChildTrait = await prisma.childTraits.create({
+          const createdChildTrait = await prisma.childTraits.create({
             data: {
               childId: parseInt(id),
               traitId: parseInt(trait),
             },
           });
-          return newChildTrait;
+          const traitData = await prisma.traits.findUnique({
+            where: {
+              id: createdChildTrait.traitId,
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+          updatedTraits.push(traitData);
+          updatedChild.traits = updatedTraits;
+          return createdChildTrait;
         })
       );
-
-      return [updatedChild];
+      return updatedChild;
     });
 
     res.status(200).json({
       message: "success",
-      childId: updatedChild.id,
+      child: updatedChild,
     });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ message: "Error occurred while updating child." });
