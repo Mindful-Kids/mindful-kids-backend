@@ -5,14 +5,8 @@ const careTakerControllers = require("../controllers/caretaker_controllers");
 
 /*CareTaker*/
 router.post("/login", careTakerControllers.login);
-router.post(
-  "/send-verification-code",
-  careTakerControllers.sendVerificationCode
-);
-router.post(
-  "/verify-verification-code",
-  careTakerControllers.verifyVerificationCode
-);
+router.post("/send-otp", careTakerControllers.sendOTP);
+router.post("/verify-otp", careTakerControllers.verifyOTP);
 router.post("/signup", careTakerControllers.signup);
 router.post("/update-profile", verifyToken, careTakerControllers.updateProfile);
 router.post(
