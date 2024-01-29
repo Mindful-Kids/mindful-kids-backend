@@ -38,12 +38,12 @@ const initializeSocketIO = (io) => {
       });
 
       // Listen event from webite or app after environment permission given
-      socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (room) => {
-        const vrHeadsetSocketId = vrHeadsets.get(room);
+      socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
+        const vrHeadsetSocketId = vrHeadsets.get(payload.room);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.GIVE_ENVIRONMENT_PERMISSION,
-            "Give environment position"
+            payload
           );
         }
         // socket.to(room).emit(EventEnum.GIVE_ENVIRONMENT_PERMISSION, "Give environment position");

@@ -118,6 +118,41 @@ const getSelectedEnviroments = async (req, res) => {
   }
 };
 
+const getChildrenEnvironments = async (req, res) => {
+  const childId = req.params.id;
+  if (!childId) {
+    return res.status(422).json({ message: "Required fields are not filled." });
+  }
+
+  try {
+    let environments = await prisma.enviroments.findMany({
+      where: {
+        ChildEnviroments: {
+          some: {
+            childId: parseInt(childId),
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
+    });
+
+    // Add isSelected with a default value of false to each environment
+    environments = environments.map((env) => ({ ...env, isSelected: false }));
+
+    return res
+      .status(200)
+      .json({ message: "success ennv", data: environments });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while fetching environments." });
+  }
+};
+
 const getUnselectedEnviroments = async (req, res) => {
   const childId = req.params.id;
   try {
@@ -150,7 +185,7 @@ const getUnselectedEnviroments = async (req, res) => {
 module.exports = {
   getEnvironments,
   addEnvironment,
-
   getUnselectedEnviroments,
   getSelectedEnviroments,
+  getChildrenEnvironments,
 };

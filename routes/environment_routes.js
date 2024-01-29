@@ -19,5 +19,10 @@ router.post(
   multer.single("image"),
   environmentController.addEnvironment
 );
+router.get(
+  "/get-children-environments/:id",
+  verifyToken,
+  environmentController.getChildrenEnvironments
+);
 
 module.exports = router;
