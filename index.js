@@ -11,7 +11,7 @@ dotenv.config();
 
 const io = new Server(server, {
   path: "/socket",
-  transports: ["websocket", "polling"],
+  transports: ["websocket", "pooling"],
   // wsEngine: ["ws", "wss"],
   cors: {
     origin: "https://mindfulkids.tech/",
