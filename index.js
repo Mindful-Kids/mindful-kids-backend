@@ -12,7 +12,11 @@ dotenv.config();
 const io = new Server(server, {
   path: "/socket",
   transports: ["websocket", "pooling"],
+<<<<<<< HEAD
   wsEngine: ["ws", "wss"],
+=======
+  // wsEngine: ["ws", "wss"],
+>>>>>>> parent of e7de5db (socket error solve)
   cors: {
     origin: "*",
     credentials: true,
