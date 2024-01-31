@@ -20,11 +20,7 @@ const io = new Server(server, {
 app.set("io", io);
 
 app.use(express.json());
-const corsOptions = {
-  origin: "*",
-  credentials: true, //access-control-allow-credentials:true
-};
-app.use(cors(corsOptions));
+app.use(cors());
 
 app.get("/", async (req, res) => {
   res.send("🚀API is running!");
