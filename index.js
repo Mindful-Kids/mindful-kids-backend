@@ -21,7 +21,7 @@ app.set("io", io);
 
 app.use(express.json());
 const corsOptions = {
-  origin: "https://mindfulkids.tech",
+  origin: "*",
   credentials: true, //access-control-allow-credentials:true
 };
 app.use(cors(corsOptions));
