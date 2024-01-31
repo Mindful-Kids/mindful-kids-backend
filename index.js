@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const http = require('http');
+const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
@@ -11,16 +11,19 @@ dotenv.config();
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: "*",
     credentials: true,
-  }
+  },
 });
 
 // // This will make it global to access in routes
 app.set("io", io);
 
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  credentials: true, //access-control-allow-credentials:true
+};
+app.use(cors(corsOptions));
 
 app.get("/", async (req, res) => {
   res.send("🚀API is running!");
