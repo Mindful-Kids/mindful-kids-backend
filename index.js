@@ -10,10 +10,14 @@ const { initializeSocketIO } = require("./sockets/index");
 dotenv.config();
 
 const io = new Server(server, {
+  path: "/socket",
+  transports: ["websocket", "pooling"],
+  wsEngine: ["ws", "wss"],
   cors: {
     origin: "*",
     credentials: true,
   },
+  allowEIO3: true,
 });
 
 // // This will make it global to access in routes
