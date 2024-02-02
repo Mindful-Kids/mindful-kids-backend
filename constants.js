@@ -15,11 +15,6 @@ const EventEnum = Object.freeze({
   STOP_ENVIRONMENT_PERMISSION: "stopPermission",
 });
 
-const LocalStorageEnum = Object.freeze({
-  SOCKET_ID: "socketId",
-});
-
 module.exports = {
   EventEnum,
-  LocalStorageEnum,
 };

@@ -1,4 +1,4 @@
-const { EventEnum, LocalStorageEnum } = require("../constants");
+const { EventEnum } = require("../constants");
 const jwt = require("jsonwebtoken");
 
 const vrHeadsets = new Map();
@@ -13,7 +13,7 @@ const initializeSocketIO = (io) => {
       socket.user = user;
 
       // Add user in room
-      socket.join(user.toString());
+      socket.join(`user_${user}`);
 
       const socketIdFromHeaders = socket.handshake.headers["socket-id"];
       if (socketIdFromHeaders) {
@@ -27,10 +27,11 @@ const initializeSocketIO = (io) => {
       }
 
       // Listen event from vr headset for environment permission
-      socket.on(EventEnum.DEMAND_ENVIRONMENT_PERMISSION, (room) => {
-        vrHeadsets.set(room, socket.id);
+      socket.on(EventEnum.DEMAND_ENVIRONMENT_PERMISSION, (user) => {
+        const userRoom = `user_${user.data}`;
+        vrHeadsets.set(userRoom, socket.id);
         socket
-          .to(room)
+          .to(userRoom)
           .emit(
             EventEnum.DEMAND_ENVIRONMENT_PERMISSION,
             "Demand environment position"
@@ -39,7 +40,8 @@ const initializeSocketIO = (io) => {
 
       // Listen event from webite or app after environment permission given
       socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
-        const vrHeadsetSocketId = vrHeadsets.get(payload.room);
+        const userRoom = `user_${payload.data.room}`;
+        const vrHeadsetSocketId = vrHeadsets.get(userRoom);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.GIVE_ENVIRONMENT_PERMISSION,
