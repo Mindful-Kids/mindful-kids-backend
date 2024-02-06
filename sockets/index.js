@@ -28,7 +28,7 @@ const initializeSocketIO = (io) => {
 
       // Listen event from vr headset for environment permission
       socket.on(EventEnum.DEMAND_ENVIRONMENT_PERMISSION, (user) => {
-        const userRoom = `user_${user.data}`;
+        const userRoom = `user_${user.parentId}`;
         vrHeadsets.set(userRoom, socket.id);
         socket
           .to(userRoom)
