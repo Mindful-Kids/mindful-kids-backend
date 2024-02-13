@@ -303,14 +303,7 @@ const addChild = async (req, res) => {
     description,
   } = req.body;
 
-  if (
-    !firstName ||
-    !genderId ||
-    !dateOfBirth ||
-    !hobbies ||
-    !traits ||
-    !description
-  )
+  if (!firstName || !genderId || !dateOfBirth || !hobbies || !traits)
     return res.status(422).json({ message: "Required fields are not filled" });
   const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
 
@@ -511,7 +504,7 @@ const updateChild = async (req, res) => {
       child: updatedChild,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while updating child." });
