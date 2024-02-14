@@ -58,7 +58,7 @@ const login = async (req, res) => {
   jwt.sign(
     { id: existingUser.id, email: existingUser.email },
     process.env.JWT_SECRET,
-    { expiresIn: "2h" },
+    { expiresIn: "12h" },
     (err, token) => {
       if (err) {
         res.status(500).json({
@@ -144,7 +144,7 @@ const signup = async (req, res) => {
     return res.status(422).json({ message: "User already exists." });
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
+  const image = `https://api.multiavatar.com/${firstName}${lastName}.svg`;
 
   const careTaker = {
     firstName: firstName,
@@ -311,16 +311,9 @@ const addChild = async (req, res) => {
     description,
   } = req.body;
 
-  if (
-    !firstName ||
-    !genderId ||
-    !dateOfBirth ||
-    !hobbies ||
-    !traits ||
-    !description
-  )
+  if (!firstName || !genderId || !dateOfBirth || !hobbies || !traits)
     return res.status(422).json({ message: "Required fields are not filled" });
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
+  const image = `https://api.multiavatar.com/${firstName}${lastName}.svg`;
 
   const child = {
     firstName: firstName,
