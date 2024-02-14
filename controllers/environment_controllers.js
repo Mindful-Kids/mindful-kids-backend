@@ -1,4 +1,4 @@
-const cloudinary = require("../config/cloudinary");
+const cloudinary = require("../config/cloudinary_client");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
