@@ -40,6 +40,7 @@ const initializeSocketIO = (io) => {
 
       // Listen event from webite or app after environment permission given
       socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
+        console.log(payload);
         const userRoom = `user_${payload.data.room}`;
         const vrHeadsetSocketId = vrHeadsets.get(userRoom);
         if (vrHeadsetSocketId) {
