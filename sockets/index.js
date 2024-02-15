@@ -34,29 +34,38 @@ const initializeSocketIO = (io) => {
           .to(userRoom)
           .emit(
             EventEnum.DEMAND_ENVIRONMENT_PERMISSION,
-            "Demand environment position"
+            "Demand environment position",
+            console.log("Demand environment position")
           );
       });
 
       // Listen event from webite or app after environment permission given
       socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
         const userRoom = `user_${payload.data.room}`;
+        console.log("userRoom", userRoom);
         const vrHeadsetSocketId = vrHeadsets.get(userRoom);
+        console.log(vrHeadsetSocketId);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.GIVE_ENVIRONMENT_PERMISSION,
-            payload
+            payload,
+            console.log("Give environment position", payload)
           );
         }
         // socket.to(room).emit(EventEnum.GIVE_ENVIRONMENT_PERMISSION, "Give environment position");
       });
 
       socket.on(EventEnum.STOP_ENVIRONMENT_PERMISSION, (room) => {
-        const vrHeadsetSocketId = vrHeadsets.get(room);
+        console.log("stop env ", room)
+        const userRoom = `user_${room.data}`;
+        console.log("userRoom", userRoom);
+        const vrHeadsetSocketId = vrHeadsets.get(userRoom);
+        console.log(vrHeadsetSocketId);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.STOP_ENVIRONMENT_PERMISSION,
-            "Stop environment position"
+            room.data,
+            console.log("STOP_ENVIRONMENT_PERMISSION", room)
           );
         }
       });
