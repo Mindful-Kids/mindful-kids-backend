@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
-const cloudinary = require("../config/cloudinary");
+const cloudinary = require("../config/cloudinary_client");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const { userOTPs, generateOTP } = require("../lib/utils");
+const { generateOTP } = require("../lib/utils");
+const redis = require("../config/redis_client");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -57,7 +58,7 @@ const login = async (req, res) => {
   jwt.sign(
     { id: existingUser.id, email: existingUser.email },
     process.env.JWT_SECRET,
-    { expiresIn: "2h" },
+    { expiresIn: "12h" },
     (err, token) => {
       if (err) {
         res.status(500).json({
@@ -95,11 +96,13 @@ const sendOTP = async (req, res) => {
   };
 
   try {
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         res.status(500).json({ error: "Failed to send OTP" });
       } else {
-        userOTPs[email] = otp;
+        await redis.set(`otp:${email}`, otp, {
+          EX: 60,
+        });
         res.status(200).json({ message: "OTP sent successfully" });
       }
     });
@@ -110,13 +113,18 @@ const sendOTP = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
-  const storedOTP = userOTPs[email];
+  if (!email || !otp)
+    return res
+      .status(422)
+      .json({ message: "Required parameters are not provided." });
 
+  const storedOTP = await redis.get(`otp:${email}`);
   if (storedOTP && storedOTP === otp) {
-    delete userOTPs[email];
     return res.status(200).json({ message: "Verification Successfull" });
   } else {
-    return res.status(400).json({ message: "Invalid verification code" });
+    return res.status(400).json({
+      message: "Invalid verification code or verification code expired",
+    });
   }
 };
 
@@ -136,7 +144,7 @@ const signup = async (req, res) => {
     return res.status(422).json({ message: "User already exists." });
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
+  const image = `https://api.multiavatar.com/${firstName}${lastName}.svg`;
 
   const careTaker = {
     firstName: firstName,
@@ -303,16 +311,9 @@ const addChild = async (req, res) => {
     description,
   } = req.body;
 
-  if (
-    !firstName ||
-    !genderId ||
-    !dateOfBirth ||
-    !hobbies ||
-    !traits ||
-    !description
-  )
+  if (!firstName || !genderId || !dateOfBirth || !hobbies || !traits)
     return res.status(422).json({ message: "Required fields are not filled" });
-  const image = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firstName}${lastName}&radius=50`;
+  const image = `https://api.multiavatar.com/${firstName}${lastName}.svg`;
 
   const child = {
     firstName: firstName,
@@ -511,7 +512,7 @@ const updateChild = async (req, res) => {
       child: updatedChild,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Error occurred while updating child." });

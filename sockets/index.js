@@ -16,6 +16,7 @@ const initializeSocketIO = (io) => {
       socket.join(`user_${user}`);
 
       const socketIdFromHeaders = socket.handshake.headers["socket-id"];
+      console.log("dskkds ", socketIdFromHeaders);
       if (socketIdFromHeaders) {
         console.log("reconnected");
         socket.id = socketIdFromHeaders;
@@ -41,6 +42,7 @@ const initializeSocketIO = (io) => {
 
       // Listen event from webite or app after environment permission given
       socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
+        console.log(payload);
         const userRoom = `user_${payload.data.room}`;
         console.log("userRoom", userRoom);
         const vrHeadsetSocketId = vrHeadsets.get(userRoom);
@@ -52,7 +54,6 @@ const initializeSocketIO = (io) => {
             console.log("Give environment position", payload)
           );
         }
-        // socket.to(room).emit(EventEnum.GIVE_ENVIRONMENT_PERMISSION, "Give environment position");
       });
 
       socket.on(EventEnum.STOP_ENVIRONMENT_PERMISSION, (room) => {
@@ -73,7 +74,8 @@ const initializeSocketIO = (io) => {
       socket.on(EventEnum.DISCONNECT_EVENT, () => {
         console.log("Disconnected");
         if (socket.user) {
-          socket.leave(user);
+          const userRoom = `user_${socket.user}`;
+          socket.leave(userRoom);
         }
       });
     } catch (error) {
