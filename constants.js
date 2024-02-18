@@ -13,6 +13,8 @@ const EventEnum = Object.freeze({
   GIVE_ENVIRONMENT_PERMISSION: "givePermission",
 
   STOP_ENVIRONMENT_PERMISSION: "stopPermission",
+
+  CHECK_EVENT: "check",
 });
 
 module.exports = {

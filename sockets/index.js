@@ -16,14 +16,13 @@ const initializeSocketIO = (io) => {
       socket.join(`user_${user}`);
 
       const socketIdFromHeaders = socket.handshake.headers["socket-id"];
-      console.log("dskkds ", socketIdFromHeaders);
       if (socketIdFromHeaders) {
-        console.log("reconnected");
         socket.id = socketIdFromHeaders;
+        console.log("reconnected ", socket.id);
         io.to(socketIdFromHeaders).emit(EventEnum.RECONNECT_EVENT);
       } else {
         // If no stored socket ID, then emit new socket id
-        console.log("connected");
+        console.log("connected ", socket.id);
         socket.emit(EventEnum.CONNECTED_EVENT);
       }
 
@@ -35,38 +34,33 @@ const initializeSocketIO = (io) => {
           .to(userRoom)
           .emit(
             EventEnum.DEMAND_ENVIRONMENT_PERMISSION,
-            "Demand environment position",
-            console.log("Demand environment position")
+            "Demand environment position"
           );
       });
 
       // Listen event from webite or app after environment permission given
       socket.on(EventEnum.GIVE_ENVIRONMENT_PERMISSION, (payload) => {
-        console.log(payload);
         const userRoom = `user_${payload.data.room}`;
-        console.log("userRoom", userRoom);
+        const child = payload.data.childId;
+        const environment = payload.data.environmentId;
+        // redis.set(child, environment);
         const vrHeadsetSocketId = vrHeadsets.get(userRoom);
         console.log(vrHeadsetSocketId);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.GIVE_ENVIRONMENT_PERMISSION,
-            payload,
-            console.log("Give environment position", payload)
+            payload
           );
         }
       });
 
       socket.on(EventEnum.STOP_ENVIRONMENT_PERMISSION, (room) => {
-        console.log("stop env ", room)
         const userRoom = `user_${room.data}`;
-        console.log("userRoom", userRoom);
         const vrHeadsetSocketId = vrHeadsets.get(userRoom);
-        console.log(vrHeadsetSocketId);
         if (vrHeadsetSocketId) {
           io.to(vrHeadsetSocketId).emit(
             EventEnum.STOP_ENVIRONMENT_PERMISSION,
-            room.data,
-            console.log("STOP_ENVIRONMENT_PERMISSION", room)
+            room.data
           );
         }
       });
