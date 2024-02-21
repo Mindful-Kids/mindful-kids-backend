@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 
 const vrHeadsets = new Map();
 
+
 const initializeSocketIO = (io) => {
   return io.on("connection", async (socket) => {
     try {
