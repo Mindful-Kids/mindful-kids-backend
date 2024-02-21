@@ -14,6 +14,7 @@ const io = new Server(server, {
     origin: "*",
   },
 });
+io.set("origins", "*:*");
 
 // // This will make it global to access in routes
 app.set("io", io);
