@@ -11,9 +11,10 @@ dotenv.config();
 
 const io = new Server(server, {
   cors: {
-    origin : '*'
+    origin: "*",
   },
 });
+
 // // This will make it global to access in routes
 app.set("io", io);
 
