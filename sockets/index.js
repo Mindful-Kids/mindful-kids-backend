@@ -65,6 +65,10 @@ const initializeSocketIO = (io) => {
         }
       });
 
+      socket.on(EventEnum.GET_SCORE, (room) => {
+        console.log("get score: ",room);
+      });
+
       socket.on(EventEnum.DISCONNECT_EVENT, () => {
         console.log("Disconnected");
         if (socket.user) {
@@ -79,6 +83,10 @@ const initializeSocketIO = (io) => {
         error?.message || "Something went wrong while connecting to the socket."
       );
     }
+    // redis disconnection fixed
+    io.on("error", function(error) {
+      console.error(error);
+   });
   });
 };
 
