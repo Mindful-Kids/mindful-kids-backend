@@ -6,6 +6,7 @@ let redis;
   redis = Redis.createClient({
     url: `rediss://${process.env.REDIS_HOST_NAME}:6380`,
     password: process.env.REDIS_ACCESS_KEY,
+    pingInterval: 1000 * 60 * 5, // 5 minutes
   });
 
   try {
