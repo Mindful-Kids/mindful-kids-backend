@@ -14,6 +14,8 @@ const EventEnum = Object.freeze({
 
   STOP_ENVIRONMENT_PERMISSION: "stopPermission",
 
+  GET_SCORE: "getScore",
+
   CHECK_EVENT: "check",
 });
 
