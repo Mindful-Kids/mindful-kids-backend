@@ -118,7 +118,8 @@ const verifyOTP = async (req, res) => {
       .status(422)
       .json({ message: "Required parameters are not provided." });
 
-  const storedOTP = await redis.get(`otp:${email}`);
+  const storedOTPObj = await redis.get(`otp:${email}`);
+  const storedOTP = parseInt(storedOTPObj);
   if (storedOTP && storedOTP === otp) {
     return res.status(200).json({ message: "Verification Successfull" });
   } else {
