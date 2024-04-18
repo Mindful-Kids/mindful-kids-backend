@@ -593,6 +593,12 @@ const updateChildImage = async (req, res) => {
   }
 };
 
+// Report portion start from here
+// //////////////////////////////
+// //////////////////////////////
+
+const storeScore = async (req, res) => {};
+
 module.exports = {
   login,
   signup,
@@ -608,4 +614,6 @@ module.exports = {
   updateChild,
   assignEnvironment,
   updateChildImage,
+
+  storeScore,
 };
