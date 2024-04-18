@@ -1,6 +1,8 @@
 const { EventEnum } = require("../constants");
 const jwt = require("jsonwebtoken");
 
+const { storeScore } = require("../controllers/caretaker_controllers");
+
 const vrHeadsets = new Map();
 
 const initializeSocketIO = (io) => {
@@ -65,8 +67,20 @@ const initializeSocketIO = (io) => {
         }
       });
 
-      socket.on(EventEnum.GET_SCORE, (room) => {
-        console.log("get score: ",room);
+      // Listen event from vr headset and send it to mobile app or website
+
+      socket.on(EventEnum.GET_SCORE, (userScore) => {
+        console.log("get score: ", userScore);
+        const userRoom = `user_${userScore.data}`;
+        console.log("in get score ", userRoom);
+        const score = {
+          childId: 2,
+          scoreParameters: [1, 2],
+        };
+
+        storeScore();
+
+        // socket.to(userRoom).emit(EventEnum.GET_SCORE, score);
       });
 
       socket.on(EventEnum.DISCONNECT_EVENT, () => {
@@ -84,9 +98,9 @@ const initializeSocketIO = (io) => {
       );
     }
     // redis disconnection fixed
-    io.on("error", function(error) {
+    io.on("error", function (error) {
       console.error(error);
-   });
+    });
   });
 };
 
