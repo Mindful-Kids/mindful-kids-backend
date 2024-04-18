@@ -1,7 +1,7 @@
 const { EventEnum } = require("../constants");
 const jwt = require("jsonwebtoken");
 
-const { storeScore } = require("../controllers/caretaker_controllers");
+const { storeScore } = require("../controllers/reports_controllers");
 
 const vrHeadsets = new Map();
 
@@ -99,6 +99,7 @@ const initializeSocketIO = (io) => {
 const emitSocketEvent = (io, roomId, event, socketId) => {
   io.to(roomId).except(socketId).emit(event);
 };
+
 module.exports = {
   initializeSocketIO,
   emitSocketEvent,

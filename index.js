@@ -29,6 +29,7 @@ app.use("/api/misc", require("./routes/misc_routes"));
 app.use("/api/admin", require("./routes/admin_routes"));
 app.use("/api/caretaker", require("./routes/caretaker_routes"));
 app.use("/api/environment", require("./routes/environment_routes"));
+app.use("/api/reports", require("./routes/reports_routes"));
 
 initializeSocketIO(io);
 
