@@ -69,16 +69,8 @@ const initializeSocketIO = (io) => {
 
       // Listen event from vr headset and send it to mobile app or website
 
-      socket.on(EventEnum.GET_SCORE, (userScore) => {
-        console.log("get score: ", userScore);
-        const userRoom = `user_${userScore.data}`;
-        console.log("in get score ", userRoom);
-        const score = {
-          childId: 2,
-          scoreParameters: [1, 2],
-        };
-
-        storeScore();
+      socket.on(EventEnum.GET_SCORE, (storeData) => {
+        storeScore(storeData);
 
         // socket.to(userRoom).emit(EventEnum.GET_SCORE, score);
       });

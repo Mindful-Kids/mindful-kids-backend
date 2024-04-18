@@ -597,7 +597,84 @@ const updateChildImage = async (req, res) => {
 // //////////////////////////////
 // //////////////////////////////
 
-const storeScore = async (req, res) => {};
+const storeScore = async (scoreData) => {
+  const childId = scoreData.childID;
+  const environmentId = scoreData.environmentID;
+
+  const startTime = new Date(scoreData.activityStartTime);
+  const endTime = new Date(scoreData.activityEndTime);
+
+  const traitsAcquireData = [
+    { traitId: 1, value: scoreData.scoreToKeepSelfAwareness },
+    { traitId: 2, value: scoreData.scoreToKeepSelfManagement },
+    { traitId: 3, value: scoreData.scoreToKeepSocialAwareness },
+    { traitId: 4, value: scoreData.scoreToKeepResponsibleDecisionMaking },
+    { traitId: 5, value: scoreData.scoreToKeepRelationshipMaking },
+  ];
+
+  // console.log(traitsAcquireData[0].value);
+
+  try {
+    // Start a transaction
+    const result = await prisma.$transaction(async (prisma) => {
+      // Get ChildEnvironment ID
+      const childEnvironment = await prisma.ChildEnviroments.findFirst({
+        where: {
+          childId: childId,
+          enviromentId: environmentId,
+        },
+      });
+
+      if (!childEnvironment) {
+        throw new Error("Child Environment not found.");
+      }
+      const childEnvironmentId = childEnvironment.id;
+
+      // Store ChildEnvironmentActivity
+      const childEnvironmentActivity =
+        await prisma.ChildEnviromentsActivity.create({
+          data: {
+            activityTimeStart: startTime,
+            activityTimeEnd: endTime,
+            ChildEnviromentsId: childEnvironmentId,
+          },
+        });
+
+      const childEnvironmentActivityId = childEnvironmentActivity.id;
+      // console.log(childEnvironmentId, childEnvironmentActivityId);
+
+      const traitsAcquirePromises = traitsAcquireData.map(async (traitData) => {
+        console.log({
+          childEnvActivityId: childEnvironmentActivityId,
+          traitId: traitData.traitId,
+          value: parseFloat(traitData.value),
+        });
+        const traitsAcquire = await prisma.TraitsAcquire.create({
+          data: {
+            childEnvActivityId: childEnvironmentActivityId,
+            traitId: traitData.traitId,
+            value: parseFloat(traitData.value),
+          },
+        });
+
+        return traitsAcquire;
+      });
+
+      // Execute all TraitsAcquire creations
+      await Promise.all(traitsAcquirePromises);
+
+      return {
+        childEnvironmentId: childEnvironmentId,
+        childEnvironmentActivityId: childEnvironmentActivityId,
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error storing score:", error);
+    throw new Error("Error storing score.");
+  }
+};
 
 module.exports = {
   login,
