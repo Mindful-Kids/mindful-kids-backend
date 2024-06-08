@@ -6,6 +6,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
 const { initializeSocketIO } = require("./sockets/index");
+const multer = require("./middlewares/multer");
+const cloudinary = require("./config/cloudinary_client");
 
 dotenv.config();
 
@@ -15,14 +17,34 @@ const io = new Server(server, {
   },
 });
 
-// // This will make it global to access in routes
 app.set("io", io);
 
 app.use(express.json());
 app.use(cors());
 
 app.get("/", async (req, res) => {
-  res.send("🚀API is running!");
+  res.send("🚀 API is running!");
+});
+
+app.post("/upload-image", multer.single("image"), async (req, res) => {
+  if (!req.file)
+    return res.status(422).json({ message: "Required fields are not filled." });
+
+  const upload = await cloudinary.v2.uploader
+    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .catch((err) => {
+      return res
+        .status(500)
+        .json({ message: "Error occurred while uploading image." });
+    });
+
+  if (!upload) {
+    return res
+      .status(500)
+      .json({ message: "Error occurred while uploading image." });
+  }
+
+  return res.status(200).json({ url: upload.secure_url });
 });
 
 app.use("/api/misc", require("./routes/misc_routes"));
