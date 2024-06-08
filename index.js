@@ -34,7 +34,7 @@ app.post("/upload-image", multer.single("image"), async (req, res) => {
 
   const upload = await cloudinary.v2.uploader
     .upload(req.file.path, {
-      public_id: Date.now().toString(),
+      public_id: caption + Date.now().toString(),
       folder: process.env.CLOUDINARY_FOLDER_NAME,
     })
     .catch((err) => {
