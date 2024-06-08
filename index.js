@@ -27,11 +27,16 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/upload-image", multer.single("image"), async (req, res) => {
+  const { caption } = req.body;
+  console.log(caption);
   if (!req.file)
     return res.status(422).json({ message: "Required fields are not filled." });
 
   const upload = await cloudinary.v2.uploader
-    .upload(req.file.path, { folder: process.env.CLOUDINARY_FOLDER_NAME })
+    .upload(req.file.path, {
+      public_id: Date.now().toString(),
+      folder: process.env.CLOUDINARY_FOLDER_NAME,
+    })
     .catch((err) => {
       return res
         .status(500)
